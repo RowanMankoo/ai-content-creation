@@ -11,9 +11,6 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
 
-    env:
-      GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-
     permissions:
       contents: read
       id-token: write

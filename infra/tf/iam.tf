@@ -23,6 +23,7 @@ resource "google_project_iam_binding" "gh_service_account_binding" {
   for_each = toset([
     "roles/editor",
     "roles/resourcemanager.projectIamAdmin",
+    "roles/secretmanager.secretAccessor",
   ])
   project = var.project_id
   role = each.value
