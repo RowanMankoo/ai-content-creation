@@ -17,7 +17,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-      secrets: write
 
     steps:
     - name: Checkout code
