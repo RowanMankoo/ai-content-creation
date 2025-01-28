@@ -1,0 +1,4 @@
+*
+!*.py
+!poetry.lock
+!pyproject.toml

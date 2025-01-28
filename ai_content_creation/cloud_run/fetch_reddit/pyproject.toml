@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "fetch-reddit"
+version = "0.1.0"
+description = ""
+authors = ["Rowan Mankoo <rowan.mankoo@gmail.com>"]
+readme = "README.md"
+packages = [{include = "fetch_reddit"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.115.6"
+praw = "^7.8.1"
+pydantic = "^2.10.5"
+uvicorn = "^0.34.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

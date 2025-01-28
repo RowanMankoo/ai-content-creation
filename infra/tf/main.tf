@@ -1,0 +1,75 @@
+# resource "google_cloud_run_v2_job" "default" {
+#   name                = "cloudrun-job-test"
+#   location            = "europe-west2-a"
+#   deletion_protection = false
+#   launch_stage        = "GA"
+#   template {
+#     template {
+#       containers {
+#         image = "us-docker.pkg.dev/cloudrun/container/job"
+
+#       }
+#       vpc_access {
+#         network_interfaces {
+#           network    = "default"
+#           subnetwork = "default"
+#           tags       = ["tag1", "tag2", "tag3"]
+#         }
+#       }
+#     }
+#   }
+# }
+
+
+
+resource "google_project_service" "enable_required_apis" {
+  for_each = toset([
+    "iam.googleapis.com",
+    "run.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "serviceusage.googleapis.com",
+    "artifactregistry.googleapis.com",
+  ])
+  project = var.project_id
+  service = each.value
+}
+
+resource "google_artifact_registry_repository" "docker_repository" {
+  location = "europe-west2"
+  repository_id = "docker-repository"
+  format        = "DOCKER"
+
+  docker_config {
+    immutable_tags = true
+  }
+
+
+
+  depends_on = [ google_project_service.enable_required_apis ]
+}
+
+# # Cloud Run Service
+# resource "google_cloud_run_service" "my_service" {
+#   name     = "my-public-service"
+#   location = "us-central1"
+
+#   template {
+#     spec {
+#       containers {
+#         image = "gcr.io/your-project-id/your-container-image:latest"
+#       }
+#     }
+#   }
+
+#   traffic {
+#     percent         = 100
+#     latest_revision = true
+#   }
+# }
+
+
+
+
+
+
+
