@@ -4,7 +4,6 @@ provider "google" {
 
 }
 
-# GitHub Provider
 provider "github" {
   owner = "RowanMankoo"
 }

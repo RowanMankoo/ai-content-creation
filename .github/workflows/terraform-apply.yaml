@@ -45,10 +45,6 @@ jobs:
       run: terraform plan -out=tfplan
       working-directory: infra/tf
 
-    - name: Show Terraform plan
-      run: terraform show tfplan
-      working-directory: infra/tf
-
     - name: Apply Terraform changes
       run: terraform apply -auto-approve tfplan
       working-directory: infra/tf
