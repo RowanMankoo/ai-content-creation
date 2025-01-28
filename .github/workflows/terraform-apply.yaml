@@ -1,0 +1,51 @@
+name: Terraform CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'infra/tf/**'
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.9.7
+
+    - name: Configure GCP credentials
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+    - name: Initialize Terraform
+      run: terraform init
+      working-directory: infra/tf
+
+    - name: Validate Terraform
+      run: terraform validate
+      working-directory: infra/tf
+
+    - name: Plan Terraform changes
+      id: plan
+      run: terraform plan -out=tfplan
+      working-directory: infra/tf
+
+    - name: Show Terraform plan
+      run: terraform show tfplan
+      working-directory: infra/tf
+
+    - name: Apply Terraform changes
+      run: terraform apply -auto-approve tfplan
+      working-directory: infra/tf
