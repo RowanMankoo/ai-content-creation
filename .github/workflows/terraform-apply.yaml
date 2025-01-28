@@ -27,7 +27,7 @@ jobs:
     - name: Configure GCP credentials
       uses: google-github-actions/auth@v1
       with:
-        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
     - name: Initialize Terraform
       run: terraform init
