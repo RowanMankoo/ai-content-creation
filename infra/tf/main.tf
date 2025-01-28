@@ -1,27 +1,3 @@
-# resource "google_cloud_run_v2_job" "default" {
-#   name                = "cloudrun-job-test"
-#   location            = "europe-west2-a"
-#   deletion_protection = false
-#   launch_stage        = "GA"
-#   template {
-#     template {
-#       containers {
-#         image = "us-docker.pkg.dev/cloudrun/container/job"
-
-#       }
-#       vpc_access {
-#         network_interfaces {
-#           network    = "default"
-#           subnetwork = "default"
-#           tags       = ["tag1", "tag2", "tag3"]
-#         }
-#       }
-#     }
-#   }
-# }
-
-
-
 resource "google_project_service" "enable_required_apis" {
   for_each = toset([
     "iam.googleapis.com",
