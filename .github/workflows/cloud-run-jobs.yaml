@@ -1,0 +1,43 @@
+name: Detect Changed Folders & Run Matrix Jobs
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  detect_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      changed_folders: ${{ steps.get-changed-folders.outputs.folders }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get list of changed folders
+        id: get-changed-folders
+        uses: tj-actions/changed-files@v39
+        with:
+          path: ai_content_creation/cloud_run_jobs
+          dir_names: true
+          escape_json: false
+          json: true
+
+      - name: Output changed folders
+        run: echo "Changed folders: ${{ steps.get-changed-folders.outputs.folders }}"
+
+  matrix_job:
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed_folders != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        folder: ${{ fromJson(needs.detect_changes.outputs.changed_folders) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Process changed folder
+        run: |
+          echo "Processing folder: ${{ matrix.folder }}"
