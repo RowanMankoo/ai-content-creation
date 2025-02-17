@@ -4,6 +4,9 @@ from pathlib import Path
 
 import praw
 from openai import OpenAI
+from subtitle_formatting import convert_srt_to_ass
+from google.cloud import storage
+
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +17,11 @@ USER_AGENT = os.environ.get("REDDIT_USER_AGENT")
 
 # TODO: define Post pydantic class and pass it around to diff funcs
 # TODO: improve error handling
-# TODO: use local whisper model
+# TODO: deal with video being shorter than audio
+# TODO: add sound
+# TODO: don't process reddit story if it is longer than threshold, 4096 characters is limit
+# TODO: allow for differnt videos
+# TODO: set up videos in bucket and allow access
 class RedditPostProcessor:
     """Handles fetching, processing, and combining Reddit posts into videos."""
 
@@ -26,6 +33,21 @@ class RedditPostProcessor:
         self.base_video_path = base_video_path
         self.openai_client = OpenAI()
         self.reddit_posts = []
+
+        RedditPostProcessor.download_blob()
+
+    # TODO: clean up
+    @staticmethod
+    def download_blob(
+        bucket_name="ai-content-creation-438122-storage-bucket",
+        source_blob_name="reddit_story_videos/source_videos/mc_parkour.mp4",
+        destination_file_name="/tmp/mc_parkour.mp4",
+    ):
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(bucket_name)
+        blob = bucket.blob(source_blob_name)
+        blob.download_to_filename(destination_file_name)
+        print(f"Downloaded {source_blob_name} to {destination_file_name}")
 
     def fetch_posts(self):
 
@@ -68,12 +90,13 @@ class RedditPostProcessor:
     def create_transcript(self, audio_file_path: Path, subtitle_file_path: Path):
 
         with open(audio_file_path, "rb") as audio_file:
-            transcript_response = self.openai_client.audio.transcriptions.create(
+            srt_transcript = self.openai_client.audio.transcriptions.create(
                 file=audio_file,
                 model="whisper-1",
                 response_format="srt",
             )
-        subtitle_file_path.write_text(transcript_response)
+        ass_transcript = convert_srt_to_ass(srt_transcript)
+        subtitle_file_path.write_text(ass_transcript)
 
     def combine_audio_video_subtitles(
         self,
@@ -89,8 +112,6 @@ class RedditPostProcessor:
 
     def process_post(self, post, index):
         """Processes a single post: generates audio, transcribes, and overlays subtitles on a video."""
-        logger.info(f"Processing post {index}...")
-
         output_dir = Path(f"/tmp/output_{index}")
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -118,6 +139,7 @@ class RedditPostProcessor:
                 self.process_post(post, i)
             except Exception as e:
                 logger.error(f"Error processing post {i}: {e}")
+
 
     def create_videos(self):
         """Runs the complete processing pipeline."""

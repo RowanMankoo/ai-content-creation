@@ -3,7 +3,8 @@ FROM python:3.10-slim
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl build-essential \
+    curl \
+    build-essential \
     && curl -sSL https://install.python-poetry.org | python3 - \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -19,4 +20,4 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["poetry", "run", "python", "main.py", "--subreddit", "AmITheAsshole", "--n_posts", "1", "--n_comments", "1", "--time_filter", "day"]

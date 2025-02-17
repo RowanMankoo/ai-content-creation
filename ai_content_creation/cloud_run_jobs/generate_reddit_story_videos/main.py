@@ -4,7 +4,6 @@ import logging
 from reddit_post_processor import RedditPostProcessor
 
 logger = logging.getLogger(__name__)
-# log to terminal
 logging.basicConfig(level=logging.INFO)
 
 
