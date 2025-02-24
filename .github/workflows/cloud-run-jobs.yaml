@@ -1,4 +1,4 @@
-name: Detect Changed Folders & Run Matrix Jobs
+name: Build, Tag, and Push Docker Images
 
 on:
   push:
@@ -23,21 +23,32 @@ jobs:
           escape_json: false
           json: true
 
-      - name: Output changed folders
-        run: echo "Changed folders: ${{ steps.get-changed-folders.outputs.changed_files }}"
 
-  matrix_job:
+  build_and_push:
     needs: detect_changes
-    if: needs.detect_changes.outputs.changed_folders != '[]'
+    if: ${{ needs.detect_changes.outputs.changed_folders != '[]' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         folder: ${{ fromJson(needs.detect_changes.outputs.changed_folders) }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Process changed folder
+      - name: Build Docker Image
         run: |
-          echo "Processing folder: ${{ matrix.folder }}"
+          cd ai_content_creation/cloud_run_jobs/${{ matrix.folder }}
+          docker build -t ai-content-creation/${{ matrix.folder }}:latest .
+
+      - name: Tag Docker Image
+        run: |
+          cd ai_content_creation/cloud_run_jobs/${{ matrix.folder }}
+          docker tag \
+          ai-content-creation/${{ matrix.folder }}:latest \
+          europe-west2-docker.pkg.dev/ai-content-creation-438122/docker-repository/${{ matrix.folder }}:latest
+
+      - name: Push Docker Image
+        run: |
+          cd ai_content_creation/cloud_run_jobs/${{ matrix.folder }}
+          docker push europe-west2-docker.pkg.dev/ai-content-creation-438122/docker-repository/${{ matrix.folder }}:latest
+
