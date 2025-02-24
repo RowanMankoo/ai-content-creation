@@ -30,6 +30,14 @@ jobs:
           for file in ${ALL_CHANGED_FILES}; do
             echo "$file was changed"
           done
+      
+      - name: List all changed folders
+        env:
+          CHANGED_FOLDERS: ${{ steps.get-changed-folders.outputs.folders }}
+        run: |
+          for folder in ${CHANGED_FOLDERS}; do
+            echo "$folder was changed"
+          done
 
 
   build_and_push:
