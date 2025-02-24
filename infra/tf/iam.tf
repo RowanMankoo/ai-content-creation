@@ -23,7 +23,7 @@ resource "google_project_iam_binding" "gh_service_account_binding" {
   depends_on = [google_project_service.enable_required_apis]
 }
 
-resource "google_project_iam_binding" "run_invoker_binding" {
+resource "google_project_iam_binding" "run_job_binding" {
   project = var.project_id
   role    = "roles/storage.objectAdmin"
 
