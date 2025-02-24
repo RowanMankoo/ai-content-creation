@@ -13,7 +13,6 @@ docker-tag:
 
 docker-run:
 	docker run \
-	-p 8080:8080 \
 	-v /home/rowan/projects/ai-content-creation/service_account.json:/app/key.json \
 	-e GOOGLE_APPLICATION_CREDENTIALS="/app/key.json" \
 	--env-file .env \

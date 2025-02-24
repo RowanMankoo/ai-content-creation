@@ -4,6 +4,11 @@ resource "google_service_account" "cloud_run_invoker_service_account" {
   depends_on   = [google_project_service.enable_required_apis]
 }
 
+resource "google_service_account" "cloud_run_job_service_account" {
+  account_id   = "cloud-run-job-sa"
+  display_name = "Cloud Run Job Service Account"
+}
+
 resource "google_service_account" "gha_service_account" {
   account_id   = "github-actions-sa"
   display_name = "GitHub Actions Service Account"
