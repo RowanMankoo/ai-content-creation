@@ -14,3 +14,7 @@ ffmpeg -i mc_parkour.mp4 -i output.mp3 -vf subtitles=subtitles.ass -map 0:v -map
 steps:
 1. get story
 2. 
+
+
+
+Changes to infra first in their own PR's
