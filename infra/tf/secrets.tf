@@ -20,3 +20,4 @@ resource "github_actions_secret" "gha_service_account" {
   secret_name     = "GCP_SERVICE_ACCOUNT_KEY"
   plaintext_value = data.google_secret_manager_secret_version.gha_service_account_key.secret_data
 }
+

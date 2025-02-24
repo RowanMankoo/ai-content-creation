@@ -24,7 +24,7 @@ jobs:
           json: true
 
       - name: Output changed folders
-        run: echo "Changed folders: ${{ steps.get-changed-folders.outputs.folders }}"
+        run: echo "Changed folders: ${{ steps.get-changed-folders.outputs.changed_files }}"
 
   matrix_job:
     needs: detect_changes
