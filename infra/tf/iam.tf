@@ -13,6 +13,8 @@ resource "google_project_iam_binding" "gh_service_account_binding" {
     "roles/editor",
     "roles/resourcemanager.projectIamAdmin",
     "roles/secretmanager.secretAccessor",
+    "roles/artifactregistry.reader",
+    "roles/artifactregistry.writer",
   ])
   project = var.project_id
   role    = each.value
