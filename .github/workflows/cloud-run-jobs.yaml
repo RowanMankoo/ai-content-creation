@@ -9,7 +9,7 @@ jobs:
   detect_changes:
     runs-on: ubuntu-latest
     outputs:
-      changed_folders: ${{ steps.get-changed-folders.outputs.folders }}
+      changed_folders: ${{ steps.get-changed-folders.outputs.all_changed_files }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,19 +23,11 @@ jobs:
           escape_json: false
           json: true
       
-      - name: List all changed files
+      - name: List all changed folders
         env:
           ALL_CHANGED_FILES: ${{ steps.get-changed-folders.outputs.all_changed_files }}
         run: |
-          for file in ${ALL_CHANGED_FILES}; do
-            echo "$file was changed"
-          done
-      
-      - name: List all changed folders
-        env:
-          CHANGED_FOLDERS: ${{ steps.get-changed-folders.outputs.folders }}
-        run: |
-          for folder in ${CHANGED_FOLDERS}; do
+          for folder in ${ALL_CHANGED_FILES}; do
             echo "$folder was changed"
           done
 
