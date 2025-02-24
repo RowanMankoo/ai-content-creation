@@ -22,6 +22,14 @@ jobs:
           dir_names: true
           escape_json: false
           json: true
+      
+      - name: List all changed files
+        env:
+          ALL_CHANGED_FILES: ${{ steps.get-changed-folders.outputs.all_changed_files }}
+        run: |
+          for file in ${ALL_CHANGED_FILES}; do
+            echo "$file was changed"
+          done
 
 
   build_and_push:
