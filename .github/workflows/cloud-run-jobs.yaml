@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+env:
+  DOCKER_REPO_NAME: europe-west2-docker.pkg.dev
+  GCP_PROJECT_ID: ai-content-creation-438122
+  GCP_REPOSITORY: docker-repository
+
 jobs:
   detect_changes:
     runs-on: ubuntu-latest
@@ -31,7 +36,6 @@ jobs:
             echo "$folder was changed"
           done
 
-
   build_and_push:
     needs: detect_changes
     if: ${{ needs.detect_changes.outputs.changed_folders != '[]' }}
@@ -43,28 +47,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set environment variables
+        run: echo "GIT_COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
       
       - name: Configure Docker to use GCP Artifact Registry
-        run: gcloud auth configure-docker europe-west2-docker.pkg.dev
+        run: gcloud auth configure-docker ${{ env.DOCKER_REPO_NAME }}
 
       - name: Build Docker Image
         run: |
           cd ai_content_creation/cloud_run_jobs/${{ matrix.folder }}
-          docker build -t ai-content-creation/${{ matrix.folder }}:latest .
+          docker build -t ai-content-creation/${{ matrix.folder }}:${{ env.GIT_COMMIT_SHA }} .
 
       - name: Tag Docker Image
         run: |
           cd ai_content_creation/cloud_run_jobs/${{ matrix.folder }}
           docker tag \
-          ai-content-creation/${{ matrix.folder }}:latest \
-          europe-west2-docker.pkg.dev/ai-content-creation-438122/docker-repository/${{ matrix.folder }}:latest
+          ai-content-creation/${{ matrix.folder }}:${{ env.GIT_COMMIT_SHA }} \
+          ${{ env.DOCKER_REPO_NAME }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ matrix.folder }}:${{ env.GIT_COMMIT_SHA }}
 
       - name: Push Docker Image
         run: |
           cd ai_content_creation/cloud_run_jobs/${{ matrix.folder }}
-          docker push europe-west2-docker.pkg.dev/ai-content-creation-438122/docker-repository/${{ matrix.folder }}:latest
-
+          docker push ${{ env.DOCKER_REPO_NAME }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ matrix.folder }}:${{ env.GIT_COMMIT_SHA }}
