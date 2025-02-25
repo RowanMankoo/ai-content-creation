@@ -89,5 +89,5 @@ jobs:
         with:
             default_author: github_actions
             message: "CICD: Update Terraform tfvars with new image: ${{ env.DOCKER_IMAGE_REFERENCE }}"
-            add: "ai_content_creation/cloud_run_jobs/${{ matrix.folder }}/terraform.tfvars"
+            add: "infra/tf/terraform.tfvars"
             push: true
