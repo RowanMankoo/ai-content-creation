@@ -30,12 +30,8 @@ jobs:
           json: true
       
       - name: List all changed folders
-        env:
-          ALL_CHANGED_FILES: ${{ steps.get-changed-folders.outputs.all_changed_files }}
-        run: |
-          for folder in ${ALL_CHANGED_FILES}; do
-            echo "$folder was changed"
-          done
+        env: ALL_CHANGED_FILES: ${{ steps.get-changed-folders.outputs.all_changed_files }}
+        run: echo "All changed folders: ${ALL_CHANGED_FILES}"
 
   build_and_push:
     needs: detect_changes
@@ -50,8 +46,9 @@ jobs:
 
       - name: Set environment variables
         run: |
+          GIT_COMMIT_SHA=$(git rev-parse --short HEAD)
           echo "GIT_COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "DOCKER_IMAGE_REFERENCE=${{ env.DOCKER_REPO_NAME }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ matrix.folder }}:${{ env.GIT_COMMIT_SHA }}" >> $GITHUB_ENV
+          echo "DOCKER_IMAGE_REFERENCE=${{ env.DOCKER_REPO_NAME }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ matrix.folder }}:$GIT_COMMIT_SHA" >> $GITHUB_ENV
 
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v1
