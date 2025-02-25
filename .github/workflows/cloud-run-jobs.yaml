@@ -1,7 +1,7 @@
 name: Build, Tag, and Push Docker Images
 
 on:
-  push:
+  pull_request:
     branches:
       - main
 
@@ -48,7 +48,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set environment variables
-        run: echo "GIT_COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        run: |
+          echo "GIT_COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "DOCKER_IMAGE_REFERENCE=${{ env.DOCKER_REPO_NAME }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ matrix.folder }}:${{ env.GIT_COMMIT_SHA }}" >> $GITHUB_ENV
 
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v1
@@ -68,9 +70,22 @@ jobs:
           cd ai_content_creation/cloud_run_jobs/${{ matrix.folder }}
           docker tag \
           ai-content-creation/${{ matrix.folder }}:${{ env.GIT_COMMIT_SHA }} \
-          ${{ env.DOCKER_REPO_NAME }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ matrix.folder }}:${{ env.GIT_COMMIT_SHA }}
+          ${{ env.DOCKER_IMAGE_REFERENCE }}
 
       - name: Push Docker Image
         run: |
           cd ai_content_creation/cloud_run_jobs/${{ matrix.folder }}
-          docker push ${{ env.DOCKER_REPO_NAME }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ matrix.folder }}:${{ env.GIT_COMMIT_SHA }}
+          docker push ${{ env.DOCKER_IMAGE_REFERENCE }}
+
+      - name: Update Terraform Image
+        run: |
+          cd infra/tf
+          sed -i "s|cloud_run_job_image__${{ matrix.folder }} = .*|cloud_run_job_image__${{ matrix.folder }} = \"${{ env.DOCKER_IMAGE_REFERENCE }}\"|" terraform.tfvars
+
+      - name: Commit and push changes
+        uses: EndBug/add-and-commit@v9
+        with:
+            default_author: github_actions
+            message: "CICD: Update Terraform tfvars with new image: ${{ env.DOCKER_IMAGE_REFERENCE }}"
+            add: "ai_content_creation/cloud_run_jobs/${{ matrix.folder }}/terraform.tfvars"
+            push: true
