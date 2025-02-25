@@ -30,8 +30,12 @@ jobs:
           json: true
       
       - name: List all changed folders
-        env: ALL_CHANGED_FILES: ${{ steps.get-changed-folders.outputs.all_changed_files }}
-        run: echo "All changed folders: ${ALL_CHANGED_FILES}"
+        env:
+          ALL_CHANGED_FILES: ${{ steps.get-changed-folders.outputs.all_changed_files }}
+        run: |
+          for folder in ${ALL_CHANGED_FILES}; do
+            echo "$folder was changed"
+          done
 
   build_and_push:
     needs: detect_changes
