@@ -18,3 +18,8 @@ steps:
 
 
 Changes to infra first in their own PR's
+- add new tfvar under terraform.tfvars `cloud_run_job_image__<cloud_run_job_name>` put any image path this will update in CICD on PR creation
+- add another cloud run job under cloud_run_jobs.tf and use image var
+
+
+Manual workflow dispatch to check what chnaegs terraform will do
