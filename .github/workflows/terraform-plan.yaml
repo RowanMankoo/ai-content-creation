@@ -1,12 +1,10 @@
-name: Build, Tag, and Push Cloud Run Job Images
+name: Plan Terraform Changes
 
 on:
   workflow_run:
-    workflows: ["Build, Tag, and Push Docker Images"]
+    workflows: ["Build, Tag, and Push Cloud Run Job Images"]
     types:
       - completed
-    paths:
-      - 'infra/tf/**'
 
 jobs:
   terraform:
