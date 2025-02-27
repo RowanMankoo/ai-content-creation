@@ -39,7 +39,7 @@ jobs:
 
   build_and_push:
     needs: detect_changes
-    if: ${{ needs.detect_changes.outputs.changed_folders != '' }}
+    if: ${{ needs.detect_changes.outputs.changed_folders != '[]' && needs.detect_changes.outputs.changed_folders != '' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
