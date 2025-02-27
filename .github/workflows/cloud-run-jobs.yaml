@@ -93,3 +93,5 @@ jobs:
             message: "CICD: Update Terraform tfvars with new image: ${{ env.DOCKER_IMAGE_REFERENCE }}"
             add: "infra/tf/terraform.tfvars"
             push: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
