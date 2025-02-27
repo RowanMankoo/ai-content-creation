@@ -7,6 +7,8 @@ resource "google_cloud_run_v2_job" "default" {
   template {
     template {
       service_account = var.service_account_email
+      max_retries     = 3
+      timeout         = "600s"
 
       containers {
         image = var.image
@@ -16,6 +18,16 @@ resource "google_cloud_run_v2_job" "default" {
             memory = "4Gi"
           }
         }
+        env {
+          name = "OPENAI_API_KEY"
+          value_source {
+            secret_key_ref {
+              secret  = "openai-api-key"
+              version = "latest"
+            }
+          }
+        }
+
       }
     }
   }
