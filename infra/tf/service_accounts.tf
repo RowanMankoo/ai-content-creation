@@ -1,9 +1,3 @@
-resource "google_service_account" "cloud_run_invoker_service_account" {
-  account_id   = "cloud-run-invoker"
-  display_name = "Cloud Run Invoker Service Account"
-  depends_on   = [google_project_service.enable_required_apis]
-}
-
 resource "google_service_account" "cloud_run_job_service_account" {
   account_id   = "cloud-run-job-sa"
   display_name = "Cloud Run Job Service Account"
