@@ -1,5 +1,5 @@
-name: Build, Tag, and Push Docker Images
-
+name: Build, Tag, and Push Cloud Run Job Images
+# TODO: clean this up so we aren't pushing on PRs
 on:
   pull_request:
     branches:

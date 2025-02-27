@@ -1,0 +1,47 @@
+name: Build, Tag, and Push Cloud Run Job Images
+
+on:
+  workflow_run:
+    workflows: ["Build, Tag, and Push Docker Images"]
+    types:
+      - completed
+    paths:
+      - 'infra/tf/**'
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.9.7
+
+    - name: Configure GCP credentials
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+    - name: Initialize Terraform
+      run: terraform init
+      working-directory: infra/tf
+
+    - name: Validate Terraform
+      run: terraform validate
+      working-directory: infra/tf
+
+    - name: Plan Terraform changes
+      id: plan
+      run: terraform plan -out=tfplan
+      working-directory: infra/tf
