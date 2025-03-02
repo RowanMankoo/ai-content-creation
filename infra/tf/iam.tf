@@ -18,7 +18,6 @@ resource "google_project_iam_binding" "gh_service_account_binding" {
 resource "google_project_iam_binding" "run_job_binding" {
   for_each = toset([
     "roles/storage.objectAdmin",
-    "roles/secretmanager.secretAccessor",
   ])
   project = var.project_id
   role    = each.value
