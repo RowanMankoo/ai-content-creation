@@ -18,15 +18,28 @@ resource "google_cloud_run_v2_job" "default" {
             memory = "4Gi"
           }
         }
-        env {
-          name = "OPENAI_API_KEY"
-          value_source {
-            secret_key_ref {
-              secret  = "openai-api-key"
-              version = "latest"
+        dynamic "env" {
+          for_each = var.env_vars
+          content {
+            name  = env.value.name
+            value = env.value.value
+          }
+          
+        }
+
+        dynamic "env" {
+          for_each = var.gcp_secret_manager_env_vars
+          content {
+            name = env.value.env_name
+            value_source {
+              secret_key_ref {
+                secret  = env.value.secret_name
+                version = env.value.version
+              }
             }
           }
         }
+
 
       }
     }

@@ -6,7 +6,7 @@ from reddit_post_processor import RedditPostProcessor
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-
+# TODO: acctually make these effective options to pick when triggering cronjob
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Fetch top Reddit posts with comments."
