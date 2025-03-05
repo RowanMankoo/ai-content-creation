@@ -241,7 +241,7 @@ class RedditPostProcessor:
         self.create_audio(post, audio_file_path)
         self.create_transcript(audio_file_path, subtitle_file_path)
         self.combine_audio_video_subtitles(
-            audio_file_path, self.base_video_path, subtitle_file_path, output_video_path
+            audio_file_path, Path(self.base_video_path), subtitle_file_path, output_video_path
         )
 
         logger.info(f"Post {index} processed.")
