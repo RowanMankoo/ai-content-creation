@@ -197,7 +197,7 @@ class RedditPostProcessor:
             "-shortest",  # Stop at the shortest input length
             "-y",
             str(output_file_path),  # Overwrite output file if exists
-            "threads",
+            "-threads",
             "0",  # Use all available
         ]
 
