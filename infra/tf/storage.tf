@@ -46,5 +46,9 @@ resource "google_bigquery_table" "table" {
       name = "scope"
       type = "STRING"
     },
+    {
+      name = "updated_at"
+      type = "TIMESTAMP"
+    },
   ])
 }
