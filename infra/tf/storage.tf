@@ -22,3 +22,29 @@ resource "google_storage_bucket" "storage-bucket" {
     prevent_destroy = true
   }
 }
+
+resource "google_bigquery_dataset" "dataset" {
+  dataset_id = "oauth"
+  location   = "europe-west2"
+}
+
+resource "google_bigquery_table" "table" {
+  dataset_id = google_bigquery_dataset.dataset.dataset_id
+  table_id   = "tiktok"
+  description = "Table for storing TikTok refresh token"
+
+  schema = jsonencode([
+    {
+      name = "refresh_token"
+      type = "STRING"
+    },
+    {
+      name = "refresh_expires_in"
+      type = "STRING"
+    },
+    {
+      name = "scope"
+      type = "STRING"
+    },
+  ])
+}
