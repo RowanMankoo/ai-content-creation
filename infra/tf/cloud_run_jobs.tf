@@ -1,8 +1,8 @@
 module "name" {
   source                = "./modules/cloud_run"
   image                 = var.cloud_run_job_image__generate_reddit_story_videos
-  service_account_email = google_service_account.cloud_run_job_service_account.email
-  env_vars = [ 
+  service_account_email = google_service_account.cicd_sa.email
+  env_vars = [
     {
       name  = "REDDIT_USER_AGENT"
       value = "MyRedditApp/1.0 by RatedR4Rowan"
