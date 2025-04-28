@@ -29,9 +29,11 @@ resource "google_bigquery_dataset" "dataset" {
 }
 
 resource "google_bigquery_table" "table" {
-  dataset_id = google_bigquery_dataset.dataset.dataset_id
-  table_id   = "tiktok"
+  dataset_id  = google_bigquery_dataset.dataset.dataset_id
+  table_id    = "tiktok"
   description = "Table for storing TikTok refresh token"
+
+  deletion_protection = false
 
   schema = jsonencode([
     {
