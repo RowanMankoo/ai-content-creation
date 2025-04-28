@@ -1,8 +1,7 @@
-
 module "zip__upload_to_tiktok" {
   source        = "./modules/cloud_function_zip_code"
   name          = "upload_to_tiktok"
-  source_dir    = "${path.root}/../ai_content_creation/cloud_functions/get_tiktok_oauth_token"
+  source_dir    = "${path.root}/../../ai_content_creation/cloud_functions/get_tiktok_oauth_token"
   bucket        = google_storage_bucket.storage-bucket.name
   object_prefix = "terraform/cloud_function_zip_code/"
 }
