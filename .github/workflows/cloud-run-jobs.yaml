@@ -4,6 +4,8 @@ on:
   pull_request:
     branches:
       - main
+    paths:
+      - 'ai_content_creation/cloud_run_jobs/**'
 
 env:
   DOCKER_REPO_NAME: europe-west2-docker.pkg.dev

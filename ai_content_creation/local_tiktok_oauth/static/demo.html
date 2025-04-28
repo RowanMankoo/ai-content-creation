@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Demo - AI TikTok Video Uploader</title>
+</head>
+<body>
+  <h1>Demo Page</h1>
+  <p>This demo showcases the end-to-end integration with TikTok:</p>
+  <ul>
+    <li><strong>Login Kit:</strong> Authenticate via TikTok's OAuth flow (scope: <code>user.info.basic</code>).</li>
+    <li><strong>Content Posting API:</strong> Upload videos as drafts to your TikTok profile (scopes: <code>video.publish</code> and <code>video.upload</code>).</li>
+  </ul>
+  <p>To get started, please login with TikTok or upload your AI-generated video:</p>
+  <p><a href="/login">Login with TikTok</a></p>
+  
+  <h2>Upload Video</h2>
+  <form action="/upload" method="post" enctype="multipart/form-data">
+    <label for="video">Choose video file (.mp4 or .mov):</label>
+    <input type="file" name="video" id="video" accept=".mp4,.mov" required>
+    <button type="submit">Upload to TikTok</button>
+  </form>
+  
+  {% if message %}
+    <p style="color:green;">{{ message }}</p>
+  {% endif %}
+  
+  <p><a href="/">Back to Home</a></p>
+</body>
+</html>

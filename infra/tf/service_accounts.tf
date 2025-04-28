@@ -1,11 +1,11 @@
-resource "google_service_account" "cloud_run_job_service_account" {
+resource "google_service_account" "cicd_sa" {
   account_id   = "cloud-run-job-sa"
   display_name = "Cloud Run Job Service Account"
 }
 
 # Manually defined via GCP Console
 data "google_service_account" "gha_service_account" {
-  account_id = "github-actions-sa" 
+  account_id = "github-actions-sa"
   project    = var.project_id
 }
 
