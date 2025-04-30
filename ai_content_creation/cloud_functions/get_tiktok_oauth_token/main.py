@@ -59,7 +59,7 @@ def fetch_access_token(request):
       UPDATE `{TABLE_ID}`
       SET
         refresh_token = '{oauth_resp["refresh_token"]}',
-        refresh_expires_in = {oauth_resp["refresh_expires_in"]},
+        refresh_expires_in = '{str(oauth_resp["refresh_expires_in"])}',
         scope = '{oauth_resp["scope"]}',
         updated_at = CURRENT_TIMESTAMP()
       WHERE TRUE

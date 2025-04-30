@@ -168,4 +168,5 @@ cython_debug/
 *.json
 *.csv
 *.zip
+*.terraform.lock.hcl
 experiments/
