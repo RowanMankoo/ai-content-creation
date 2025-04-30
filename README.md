@@ -23,3 +23,10 @@ Changes to infra first in their own PR's
 
 
 Manual workflow dispatch to check what chnaegs terraform will do
+
+## Local tf setup 
+
+To use terraform commands locally you need to set up GH auth as follows:
+
+1. `unset GITHUB_TOKEN`
+2. `gh auth login`

@@ -167,5 +167,5 @@ cython_debug/
 *.srt
 *.json
 *.csv
-
+*.zip
 experiments/
