@@ -7,7 +7,7 @@ resource "google_cloud_scheduler_job" "trigger_my_job" {
   http_target {
     http_method = "POST"
     # point to the jobs.run endpoint for the specific job:
-    uri = "https://${module.cloud_run_job__generate_reddit_story_videos.location}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${data.google_project.current.number}/jobs/${module.cloud_run_job__generate_reddit_story_videos.name}:run"
+    uri = "https://${module.cloud_run_job__generate_reddit_story_videos.location}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${data.google_project.project.number}/jobs/${module.cloud_run_job__generate_reddit_story_videos.name}:run"
 
     # supply your override JSON in the body, base64-encoded:
     body = base64encode(jsonencode({
