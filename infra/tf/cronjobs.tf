@@ -39,9 +39,4 @@ resource "google_cloud_scheduler_job" "trigger_my_job" {
     retry_count = 3
   }
 
-  depends_on = [
-    google_cloud_run_v2_job.my_job,
-    // ensure the Scheduler API is enabled
-    google_project_service.cloudscheduler_api
-  ]
 }
