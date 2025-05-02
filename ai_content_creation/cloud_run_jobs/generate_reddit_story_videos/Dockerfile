@@ -21,4 +21,5 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["poetry", "run", "python", "main.py"]
+ENTRYPOINT ["poetry", "run", "python", "main.py"]
+CMD []
