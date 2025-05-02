@@ -1,7 +1,7 @@
 resource "google_cloud_scheduler_job" "trigger_my_job" {
   name        = "trigger-my-job"
   description = "Invoke my-job daily at 5 AM London time"
-  schedule    = "0 15 * * *"
+  schedule    = "0 16 * * *"
   time_zone   = "Europe/London"
 
   http_target {

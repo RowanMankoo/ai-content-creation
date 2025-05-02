@@ -1,7 +1,6 @@
 provider "google" {
   project = var.project_id
-  region  = "europe-west2-a"
-
+  region  = "europe-west2"
 }
 
 provider "github" {
