@@ -30,3 +30,8 @@ To use terraform commands locally you need to set up GH auth as follows:
 
 1. `unset GITHUB_TOKEN`
 2. `gh auth login`
+
+
+only 15-25 apps are have been audited and clear for use by tiktok of their content posting api
+
+youtube is easier to verify an app

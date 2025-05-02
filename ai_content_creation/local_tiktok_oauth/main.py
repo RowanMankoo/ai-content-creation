@@ -98,7 +98,7 @@ def login():
         'response_type': 'code',
         'client_key': CLIENT_KEY,
         'redirect_uri': REDIRECT_URI,
-        'scope': 'user.info.basic',
+        'scope': 'user.info.basic,video.publish,video.upload',
         'state': state,
         'code_challenge': code_challenge,
         'code_challenge_method': 'S256'

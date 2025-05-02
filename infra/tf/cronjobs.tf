@@ -1,7 +1,7 @@
 resource "google_cloud_scheduler_job" "trigger_generate_reddit_story_videos" {
   name        = "trigger_generate_reddit_story_videos"
   description = "Trigger Cloud Run Job to generate Reddit story videos"
-  schedule    = "0 15 * * *"
+  schedule    = "10 18 * * *"
   time_zone   = "Europe/London"
 
   http_target {
