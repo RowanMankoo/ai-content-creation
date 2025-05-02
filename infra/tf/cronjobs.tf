@@ -1,6 +1,6 @@
-resource "google_cloud_scheduler_job" "trigger_my_job" {
-  name        = "trigger-my-job"
-  description = "Invoke my-job daily at 5 AM London time"
+resource "google_cloud_scheduler_job" "trigger_generate_reddit_story_videos" {
+  name        = "trigger_generate_reddit_story_videos"
+  description = "Trigger Cloud Run Job to generate Reddit story videos"
   schedule    = "0 15 * * *"
   time_zone   = "Europe/London"
 
