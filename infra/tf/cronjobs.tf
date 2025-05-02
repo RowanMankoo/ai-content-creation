@@ -14,10 +14,8 @@ resource "google_cloud_scheduler_job" "trigger_my_job" {
       overrides = {
         containerOverrides = [
           {
-            # pass args instead of env
             args = [
-              "--input-topic=reddit-stories",
-              "--output-bucket=gs://my-output-bucket"
+              "--subreddit=AmITheAsshole",
             ]
           }
         ]
