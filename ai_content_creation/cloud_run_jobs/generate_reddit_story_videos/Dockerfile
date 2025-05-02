@@ -21,4 +21,4 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["poetry", "run", "python", "main.py", "--subreddit", "AmITheAsshole", "--n_posts", "1", "--n_comments", "1", "--time_filter", "day"]
+CMD ["poetry", "run", "python", "main.py"]
