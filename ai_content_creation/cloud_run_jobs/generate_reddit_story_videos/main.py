@@ -6,23 +6,25 @@ from reddit_post_processor import RedditPostProcessor
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-# TODO: acctually make these effective options to pick when triggering cronjob
+
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Fetch top Reddit posts with comments."
     )
-    parser.add_argument("--subreddit", type=str, required=True, help="Subreddit name")
     parser.add_argument(
-        "--n_posts", type=int, required=True, help="Number of posts to fetch"
+        "--subreddit", type=str, default="AmITheAsshole", help="Subreddit name"
     )
     parser.add_argument(
-        "--n_comments", type=int, required=True, help="Number of comments per post"
+        "--n_posts", type=int, default=1, help="Number of posts to fetch"
+    )
+    parser.add_argument(
+        "--n_comments", type=int, default=1, help="Number of comments per post"
     )
     parser.add_argument(
         "--time_filter",
         type=str,
         choices=["all", "year", "month", "week", "day", "hour"],
-        required=True,
+        default="day",
         help="Time filter for top posts",
     )
     parser.add_argument(
