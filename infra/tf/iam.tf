@@ -1,7 +1,3 @@
-data "google_project" "project" {
-  project_id = var.project_id
-}
-
 locals {
   cicd_sa        = "serviceAccount:${google_service_account.cicd_sa.email}"
   cloudbuild_sa  = "serviceAccount:${data.google_project.project.number}@cloudbuild.gserviceaccount.com"
@@ -13,6 +9,8 @@ locals {
     "roles/secretmanager.secretAccessor",
     "roles/bigquery.dataEditor",
     "roles/bigquery.jobUser",
+    "roles/run.admin",
+    "roles/iam.serviceAccountTokenCreator",
   ]
   cloudbuild_roles  = [
     "roles/storage.admin",

@@ -1,4 +1,5 @@
-module "name" {
+module "cloud_run_job__generate_reddit_story_videos" {
+  job_name              = "generate-reddit-story-videos"
   source                = "./modules/cloud_run"
   image                 = var.cloud_run_job_image__generate_reddit_story_videos
   service_account_email = google_service_account.cicd_sa.email

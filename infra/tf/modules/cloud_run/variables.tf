@@ -1,3 +1,9 @@
+variable "job_name" {
+  description = "The name of the Cloud Run Job"
+  type        = string
+}
+
+
 variable "image" {
   description = "The image to use for the instance"
   type        = string

@@ -1,6 +1,6 @@
 # Define the Cloud Run Job with the service account attached
 resource "google_cloud_run_v2_job" "default" {
-  name                = "cloudrun-job"
+  name                = var.job_name
   location            = "us-central1"
   deletion_protection = false
 
