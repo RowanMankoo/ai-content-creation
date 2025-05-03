@@ -17,6 +17,14 @@ CLIENT_ID = os.environ.get("REDDIT_CLIENT_ID")
 SECRET_KEY = os.environ.get("REDDIT_SECRET_KEY")
 USER_AGENT = os.environ.get("REDDIT_USER_AGENT")
 
+TEXT_CLEANING_PROMPT = """
+You are a helpful assistant tasked with cleaning raw Reddit text, the final output will be used for text-to-speech synthesis and should sound natural and human-like. Your objectives are:
+- Correct typos and grammatical errors.
+- Remove hyperlinks and irrelevant formatting.
+- Expand abbreviations and acronyms to their full forms.
+- Preserve all original punctuation, including commas, periods, ellipses, and line breaks, to maintain natural speech rhythms.
+- Do not alter the intended meaning or tone of the text.
+"""
 
 # TODO: define Post pydantic class and pass it around to diff funcs
 # TODO: improve error handling
@@ -137,12 +145,12 @@ class RedditPostProcessor:
 
             self.reddit_posts.append(post_info)
 
-    def create_audio(self, post: dict, audio_file_path: Path):
+    def create_audio(self, text: str, audio_file_path: Path):
 
         audio_response = self.openai_client.audio.speech.create(
             model="tts-1",
             voice="alloy",
-            input=post["title"] + "\n" + post["text"],
+            input=text,
         )
         audio_response.stream_to_file(audio_file_path)
 
@@ -175,30 +183,28 @@ class RedditPostProcessor:
             if not file_path.exists():
                 raise FileNotFoundError(f"Required file {file_path} does not exist.")
 
-        # FFmpeg command as a list (safe from shell injection)
+        # Dynamic 9:16 crop, centred horizontally
+        crop_expr = "crop=ih*9/16:ih:(iw-ih*9/16)/2:0"
+        vf = f"{crop_expr},subtitles='{subtitle_file_path}'"
         command = [
             "ffmpeg",
+            "-y",
             "-i",
-            str(video_file_path),  # Input video
+            str(video_file_path),
             "-i",
-            str(audio_file_path),  # Input audio
+            str(audio_file_path),
             "-vf",
-            f"subtitles={subtitle_file_path}",  # Add subtitles
+            vf,
             "-map",
             "0:v",
             "-map",
-            "1:a",  # Map video from input 0, audio from input 1
+            "1:a",
             "-c:v",
             "libx264",
             "-c:a",
             "aac",
-            "-strict",
-            "experimental",  # Encoding options
-            "-shortest",  # Stop at the shortest input length
-            "-y",
-            str(output_file_path),  # Overwrite output file if exists
-            "-threads",
-            "0",  # Use all available
+            "-shortest",
+            str(output_file_path),
         ]
 
         try:
@@ -231,6 +237,18 @@ class RedditPostProcessor:
             local_processed_video_path, destination_blob_name
         )
 
+    def create_cleaned_text(self, post: dict) -> str:
+        text_to_clean = post["title"] + "\n\n" + post["text"]
+        response = self.openai_client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {"role": "system", "content": TEXT_CLEANING_PROMPT},
+                {"role": "user", "content": text_to_clean},
+            ],
+            temperature=0,
+        )
+        return response.choices[0].message.content
+
     def process_post(self, post, index):
         """Processes a single post: generates audio, transcribes, and overlays subtitles on a video."""
         output_dir = Path(f"/tmp/output_{index}")
@@ -240,10 +258,14 @@ class RedditPostProcessor:
         subtitle_file_path = output_dir / "transcript.srt"
         output_video_path = output_dir / "output.mp4"
 
-        self.create_audio(post, audio_file_path)
+        cleaned_text = self.create_cleaned_text(post)
+        self.create_audio(cleaned_text, audio_file_path)
         self.create_transcript(audio_file_path, subtitle_file_path)
         self.combine_audio_video_subtitles(
-            audio_file_path, Path(self.base_video_path), subtitle_file_path, output_video_path
+            audio_file_path,
+            Path(self.base_video_path),
+            subtitle_file_path,
+            output_video_path,
         )
 
         logger.info(f"Post {index} processed.")
@@ -270,5 +292,3 @@ class RedditPostProcessor:
         """Runs the complete processing pipeline."""
         self.fetch_posts()
         self.process_all_posts()
-
-# dd11
