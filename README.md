@@ -1,37 +1,67 @@
 # ai-content-creation
 
-1. build docker images
-2. push to GCP Registry
-3. apply terraform 
+This repository automates the creation of AI-generated videos for platforms like TikTok and YouTube Shorts, in the hope to gain profit off of the monisation of the videos. 
 
+[Here](https://www.tiktok.com/@xcite9) is the TikTok account where these videos are getting posted to.
 
-apt-get -y install ffmpeg imagemagick
+## Overview
 
+A scheduled Cloud Run job scrapes posts from a "storytime" subreddit each day. For each post:
 
-ffmpeg -i mc_parkour.mp4 -i output.mp3 -vf subtitles=subtitles.ass -map 0:v -map 1:a -t 30 -c:v libx264 -c:a aac -strict -2 -shortest output_with_subtitles_and_audio.mp4
+1. The text is converted to audio using a TTS model.
+2. The audio is transcribed using OpenAI's Whisper model for accurate subtitles.
+3. The audio, subtitles, and a background video are combined into a final video.
+4. The resulting video is saved to a GCS bucket and manually uploaded to TikTok.
 
+The job runs daily via a scheduled Cloud Scheduler trigger (cron job).
 
-steps:
-1. get story
-2. 
+---
 
+## CI/CD
 
+- On push to `main`, all Terraform changes are automatically applied.
+- On pull request creation, if changes are detected in the `cloud_run_jobs` folder:
+  - A new Docker image is built with the changes.
+  - The image is pushed to Artifact Registry.
+  - CI/CD updates `terraform.tfvars` with the new image reference.
+- A manual workflow dispatch is available to run `terraform plan` if needed.
 
-Changes to infra first in their own PR's
-- add new tfvar under terraform.tfvars `cloud_run_job_image__<cloud_run_job_name>` put any image path this will update in CICD on PR creation
-- add another cloud run job under cloud_run_jobs.tf and use image var
+---
 
+## Adding a New Cloud Run Job
 
-Manual workflow dispatch to check what chnaegs terraform will do
+1. Create a new folder under `ai_content_creation/cloud_run_jobs/<job_name>`.
+2. Add a new image variable in `terraform.tfvars`:  
+   `cloud_run_job_image__<job_name> = "<image_path>"`  
+   (This will be auto-updated in CI/CD on PR creation.)
+3. Define the Cloud Run job in `cloud_run_jobs.tf` and reference the image variable.
 
-## Local tf setup 
+---
 
-To use terraform commands locally you need to set up GH auth as follows:
+## Local Terraform Setup
 
-1. `unset GITHUB_TOKEN`
-2. `gh auth login`
+To run Terraform locally:
 
+```bash
+unset GITHUB_TOKEN
+gh auth login
+```
 
-only 15-25 apps are have been audited and clear for use by tiktok of their content posting api
+---
 
-youtube is easier to verify an app
+## TikTok API Limitations
+
+Using the TikTok content posting API requires:
+
+- A registered website
+- An audit process with TikTok
+
+As of now, only 15–25 apps have been approved. A local sandbox test allowed linking one account, but only private videos could be posted—not public.
+
+See more details in `ai_content_creation/local_tiktok_oauth/README.md`.
+
+---
+
+## YouTube API
+
+YouTube’s video posting API also requires approval, but access is generally easier to obtain compared to TikTok.

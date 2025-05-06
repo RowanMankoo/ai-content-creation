@@ -1,0 +1,149 @@
+import logging
+import os
+import requests
+import json
+
+import praw
+from openai import OpenAI
+from pathlib import Path
+
+from src.subtitle_formatting import convert_srt_to_ass
+from src.prompts import TEXT_CLEANING_PROMPT, IMAGE_DESCRIPTIONS_PROMT
+
+
+logger = logging.getLogger(__name__)
+
+
+def fetch_reddit_posts(n_posts, n_comments, subreddit, time_filter) -> list:
+
+    logger.info(
+        f"Fetching top {n_posts} posts with top {n_comments} comments from {subreddit} subreddit."
+    )
+
+    reddit = praw.Reddit(
+        client_id=os.environ.get("REDDIT_CLIENT_ID"),
+        client_secret=os.environ.get("REDDIT_SECRET_KEY"),
+        user_agent=os.environ.get("REDDIT_USER_AGENT"),
+    )
+    subreddit = reddit.subreddit(subreddit)
+    top_posts = subreddit.top(time_filter=time_filter, limit=n_posts)
+
+    reddit_posts = []
+    for post in top_posts:
+        top_comments = []
+        post.comments.replace_more(limit=0)  # Remove "More comments" links
+        top_n_comments = post.comments.list()[:n_comments]
+
+        for comment in top_n_comments:
+            top_comments.append(comment.body)
+
+        post_info = {
+            "title": post.title,
+            "text": post.selftext if post.selftext else "No self-text available.",
+            "top_comments": top_comments,
+        }
+
+        reddit_posts.append(post_info)
+    return reddit_posts
+
+
+def runware_image_generation(image_description: str) -> str:
+    """
+    Generates images based on the provided descriptions using Runware API. Returns the URL of the generated image.
+    """
+    url = "https://api.runware.ai/v1"
+    runware_api_key = os.environ.get("RUNWARE_API_KEY")
+
+    headers = {
+        "Authorization": f"Bearer {runware_api_key}",
+        "Content-Type": "application/json",
+    }
+
+    payload = [
+        {
+            "taskType": "imageInference",
+            "taskUUID": "97f88698-f178-4eb9-827b-f6eda9dda1d0",
+            "width": 640,
+            "height": 1152,
+            "numberResults": 1,
+            "outputFormat": "JPEG",
+            "steps": 33,
+            "CFGScale": 3,
+            "scheduler": "Euler Beta",
+            "outputType": ["URL"],
+            "includeCost": True,
+            "seed": 1258323831228332,
+            "positivePrompt": image_description,
+            "model": "rundiffusion:130@100",
+        }
+    ]
+
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+
+    logger.info(f"Runware API status: {response.status_code}")
+    logger.info(f"Runware API response: {response.json()}")
+
+    return response.json()["data"][0]["imageURL"]
+
+
+def create_audio(openai_client: OpenAI, text: str, audio_file_path: Path):
+
+    audio_response = openai_client.audio.speech.create(
+        model="tts-1",
+        voice="alloy",
+        input=text,
+    )
+    audio_response.stream_to_file(audio_file_path)
+
+    logger.info(f"Created and saved audio to {audio_file_path}")
+
+
+def create_transcript(
+    openai_client: OpenAI, audio_file_path: Path, subtitle_file_path: Path
+) -> str:
+
+    with open(audio_file_path, "rb") as audio_file:
+        srt_transcript = openai_client.audio.transcriptions.create(
+            file=audio_file,
+            model="whisper-1",
+            response_format="srt",
+        )
+    ass_transcript = convert_srt_to_ass(srt_transcript)
+    subtitle_file_path.write_text(ass_transcript)
+
+    logger.info(f"Created and saved transcript to {subtitle_file_path}")
+    return ass_transcript
+
+
+def create_cleaned_text_for_tts(openai_client: OpenAI, post: dict) -> str:
+    text_to_clean = post["title"] + "\n\n" + post["text"]
+    response = openai_client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": TEXT_CLEANING_PROMPT},
+            {"role": "user", "content": text_to_clean},
+        ],
+        temperature=0,
+    )
+    return response.choices[0].message.content
+
+
+def create_images(openai_client: OpenAI, transcript: str) -> list[dict]:
+
+    response = openai_client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": IMAGE_DESCRIPTIONS_PROMT},
+            {"role": "user", "content": transcript.split("[Events]")[-1]},
+        ],
+        temperature=0,
+    )
+    raw_response = response.choices[0].message.content
+    logger.info(f"Raw response from OpenAI: {raw_response}")
+    images = json.loads(raw_response)
+
+    for image in images:
+        image["image_url"] = runware_image_generation(
+            image_description=image["description"]
+        )
+    return images
