@@ -47,24 +47,28 @@ def fetch_reddit_posts(n_posts, n_comments, subreddit, time_filter) -> list:
     return reddit_posts
 
 
-def runware_image_generation(image_description: str) -> str:
+def runware_image_generation(
+    image_description: str,
+    resolution: str = "640x1152",
+) -> str:
     """
     Generates images based on the provided descriptions using Runware API. Returns the URL of the generated image.
     """
-    url = "https://api.runware.ai/v1"
-    runware_api_key = os.environ.get("RUNWARE_API_KEY")
+    w, h = map(int, resolution.split("x"))
+    h_half = h // 2
 
+    url = "https://api.runware.ai/v1"
+    key = os.environ["RUNWARE_API_KEY"]
     headers = {
-        "Authorization": f"Bearer {runware_api_key}",
+        "Authorization": f"Bearer {key}",
         "Content-Type": "application/json",
     }
-
     payload = [
         {
             "taskType": "imageInference",
             "taskUUID": "97f88698-f178-4eb9-827b-f6eda9dda1d0",
-            "width": 640,
-            "height": 1152,
+            "width": w,
+            "height": h_half,
             "numberResults": 1,
             "outputFormat": "JPEG",
             "steps": 33,
@@ -78,12 +82,9 @@ def runware_image_generation(image_description: str) -> str:
         }
     ]
 
-    response = requests.post(url, headers=headers, data=json.dumps(payload))
-
-    logger.info(f"Runware API status: {response.status_code}")
-    logger.info(f"Runware API response: {response.json()}")
-
-    return response.json()["data"][0]["imageURL"]
+    r = requests.post(url, headers=headers, json=payload)
+    r.raise_for_status()
+    return r.json()["data"][0]["imageURL"]
 
 
 def create_audio(openai_client: OpenAI, text: str, audio_file_path: Path):

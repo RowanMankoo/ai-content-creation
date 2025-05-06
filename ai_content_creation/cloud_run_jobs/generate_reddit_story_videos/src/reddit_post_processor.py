@@ -4,7 +4,7 @@ from pathlib import Path
 from openai import OpenAI
 
 from src.gcp import GCPBucketHandler
-from src.ffmpeg import combine_audio_images_subtitles
+from src.ffmpeg import combine_audio_video_images_subtitles
 from src.api_requests import (
     fetch_reddit_posts,
     create_audio,
@@ -39,6 +39,12 @@ class RedditPostProcessor:
             bucket_name=gcp_bucket_name,
             gcp_bucket_video_destination_blob_prefix=gcp_bucket_video_destination_blob_prefix,
         )
+        gcp_bucket_video_source_blob_name = "reddit_story_videos/source_videos/mc_parkour.mp4"
+        # TODO: alter
+        self.base_video_path = Path("/tmp/base_video.mp4")
+        self.gcp_bucket_handler.download_file(
+            gcp_bucket_video_source_blob_name, destination_file=self.base_video_path
+        )
 
     def process_post(self, post, index):
         """Processes a single post: generates audio, transcribes, and overlays subtitles on a video."""
@@ -56,8 +62,9 @@ class RedditPostProcessor:
         )
         images = create_images(self.openai_client, transcript)
 
-        combine_audio_images_subtitles(
+        combine_audio_video_images_subtitles(
             audio_file_path=audio_file_path,
+            video_file_path=self.base_video_path,
             subtitle_file_path=subtitle_file_path,
             image_timeline=images,
             output_file_path=output_video_path,
