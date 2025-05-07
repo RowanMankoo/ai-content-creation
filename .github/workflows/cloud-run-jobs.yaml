@@ -1,9 +1,7 @@
 name: Build, Tag, and Push Cloud Run Job Images
-# TODO: clean this up so we aren't pushing on PRs
 on:
   pull_request:
-    branches:
-      - main
+    branches: [main]
     paths:
       - 'ai_content_creation/cloud_run_jobs/**'
 
@@ -16,29 +14,32 @@ jobs:
   detect_changes:
     runs-on: ubuntu-latest
     outputs:
-      changed_folders: ${{ steps.get-changed-folders.outputs.all_changed_files }}
+      changed_folders: ${{ steps.extract-top.outputs.top_level }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Get list of changed folders
-        id: get-changed-folders
+      - id: get-folders
         uses: tj-actions/changed-files@v39
         with:
           path: ai_content_creation/cloud_run_jobs
           dir_names: true
-          include_subdirs: false
+          include_subdirs: true
           dir_names_exclude_current_dir: true
           escape_json: false
           json: true
-      
-      - name: List all changed folders
+
+      - id: extract-top
+        shell: bash
         env:
-          ALL_CHANGED_FILES: ${{ steps.get-changed-folders.outputs.all_changed_files }}
+          ALL_CHANGED: ${{ steps.get-folders.outputs.all_changed_files }}
         run: |
-          for folder in ${ALL_CHANGED_FILES}; do
-            echo "$folder was changed"
-          done
+          tops=$(echo "$ALL_CHANGED" \
+            | tr -d '[]"' \
+            | tr ',' '\n' \
+            | cut -d'/' -f1 \
+            | sort -u \
+            | jq -R -s -c 'split("\n")[:-1]')
+          echo "top_level=$tops" >> $GITHUB_OUTPUT
 
   build_and_push:
     needs: detect_changes
@@ -48,53 +49,43 @@ jobs:
       matrix:
         folder: ${{ fromJson(needs.detect_changes.outputs.changed_folders) }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
 
       - name: Set environment variables
         run: |
           GIT_COMMIT_SHA=$(git rev-parse --short HEAD)
-          echo "GIT_COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "DOCKER_IMAGE_REFERENCE=${{ env.DOCKER_REPO_NAME }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ matrix.folder }}:$GIT_COMMIT_SHA" >> $GITHUB_ENV
+          echo "GIT_COMMIT_SHA=$GIT_COMMIT_SHA" >> $GITHUB_ENV
+          echo "DOCKER_IMAGE_REFERENCE=${DOCKER_REPO_NAME}/${GCP_PROJECT_ID}/${GCP_REPOSITORY}/${{ matrix.folder }}:$GIT_COMMIT_SHA" >> $GITHUB_ENV
 
-      - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v1
+      - uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-      
-      - name: Configure Docker to use GCP Artifact Registry
-        run: gcloud auth configure-docker ${{ env.DOCKER_REPO_NAME }}
 
-      - name: Build Docker Image
-        run: |
+      - run: gcloud auth configure-docker ${{ env.DOCKER_REPO_NAME }}
+
+      - run: |
           cd ai_content_creation/cloud_run_jobs/${{ matrix.folder }}
           docker build -t ai-content-creation/${{ matrix.folder }}:${{ env.GIT_COMMIT_SHA }} .
 
-      - name: Tag Docker Image
-        run: |
+      - run: |
           cd ai_content_creation/cloud_run_jobs/${{ matrix.folder }}
-          docker tag \
-          ai-content-creation/${{ matrix.folder }}:${{ env.GIT_COMMIT_SHA }} \
-          ${{ env.DOCKER_IMAGE_REFERENCE }}
+          docker tag ai-content-creation/${{ matrix.folder }}:${{ env.GIT_COMMIT_SHA }} ${{ env.DOCKER_IMAGE_REFERENCE }}
 
-      - name: Push Docker Image
-        run: |
+      - run: |
           cd ai_content_creation/cloud_run_jobs/${{ matrix.folder }}
           docker push ${{ env.DOCKER_IMAGE_REFERENCE }}
 
-      - name: Update Terraform Image
-        run: |
+      - run: |
           cd infra/tf
           sed -i "s|cloud_run_job_image__${{ matrix.folder }} = .*|cloud_run_job_image__${{ matrix.folder }} = \"${{ env.DOCKER_IMAGE_REFERENCE }}\"|" terraform.tfvars
 
-      - name: Commit and push changes
-        uses: EndBug/add-and-commit@v9
+      - uses: EndBug/add-and-commit@v9
         with:
-            default_author: github_actions
-            message: "CICD: Update Terraform tfvars with new image: ${{ env.DOCKER_IMAGE_REFERENCE }}"
-            add: "infra/tf/terraform.tfvars"
-            push: true
+          default_author: github_actions
+          message: "CICD: Update Terraform tfvars with new image: ${{ env.DOCKER_IMAGE_REFERENCE }}"
+          add: "infra/tf/terraform.tfvars"
+          push: true
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
