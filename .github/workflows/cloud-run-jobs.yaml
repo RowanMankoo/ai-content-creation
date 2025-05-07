@@ -40,6 +40,12 @@ jobs:
             | sort -u \
             | jq -R -s -c 'split("\n")[:-1]')
           echo "top_level=$tops" >> $GITHUB_OUTPUT
+      
+      - name: debug-show-changed-folders
+        run: |
+          echo "Changed folders: ${{ steps.extract-top.outputs.top_level }}"
+          echo "Changed folders count: $(echo ${{ steps.extract-top.outputs.top_level }} | jq length)"
+        shell: bash
 
   build_and_push:
     needs: detect_changes
