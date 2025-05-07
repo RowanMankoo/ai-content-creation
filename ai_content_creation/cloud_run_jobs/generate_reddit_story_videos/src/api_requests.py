@@ -8,7 +8,7 @@ from openai import OpenAI
 from pathlib import Path
 
 from src.subtitle_formatting import convert_srt_to_ass
-from src.prompts import TEXT_CLEANING_PROMPT, IMAGE_DESCRIPTIONS_PROMT
+from src.prompts import TEXT_CLEANING_PROMPT, IMAGE_DESCRIPTIONS_VIDEO_DESCRIPTION_TAGS_PROMPT
 
 
 logger = logging.getLogger(__name__)
@@ -129,22 +129,26 @@ def create_cleaned_text_for_tts(openai_client: OpenAI, post: dict) -> str:
     return response.choices[0].message.content
 
 
-def create_images(openai_client: OpenAI, transcript: str) -> list[dict]:
+def create_images_description_tags(openai_client: OpenAI, transcript: str) -> list[dict]:
 
     response = openai_client.chat.completions.create(
         model="gpt-4.1-mini",
         messages=[
-            {"role": "system", "content": IMAGE_DESCRIPTIONS_PROMT},
+            {"role": "system", "content": IMAGE_DESCRIPTIONS_VIDEO_DESCRIPTION_TAGS_PROMPT},
             {"role": "user", "content": transcript.split("[Events]")[-1]},
         ],
-        temperature=0,
+        temperature=0.5,
     )
     raw_response = response.choices[0].message.content
     logger.info(f"Raw response from OpenAI: {raw_response}")
-    images = json.loads(raw_response)
+    json_response = json.loads(raw_response)
+
+    images = json_response["images"]
+    video_description = json_response["video_description"]
+    video_tags = json_response["video_tags"]
 
     for image in images:
         image["image_url"] = runware_image_generation(
             image_description=image["description"]
         )
-    return images
+    return images, video_description, video_tags

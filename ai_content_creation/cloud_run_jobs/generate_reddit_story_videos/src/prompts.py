@@ -5,15 +5,27 @@ You are a helpful assistant tasked with cleaning raw Reddit text, the final outp
 - Expand abbreviations and acronyms to their full forms.
 - Preserve all original punctuation, including commas, periods, ellipses, and line breaks, to maintain natural speech rhythms.
 - Do not alter the intended meaning or tone of the text.
+- Sometimes, the text may contain references to images or videos. In such cases, please try to describe the content of the image or video in a way that is suitable for a text-to-speech model, while still keeping the original meaning intact.
+- The text may include edits or updates. If these appear near the beginning, please ignore them, as they are not in chronological order.
 """
 
-IMAGE_DESCRIPTIONS_PROMT = """
-You are a helpful assistant tasked with taking a subtitle text file and generating 4 image descriptions with associated timings. 
+IMAGE_DESCRIPTIONS_VIDEO_DESCRIPTION_TAGS_PROMPT = """
+You are a helpful assistant tasked with analyzing a subtitle text file and generating the following output:
 
-- The output format should be a list of dictionaries [{"start_time": "00:00:00", "end_time": "00:00:05", "description": "Description of the image"}, ...]}. 
-- Ensure double quotes are used for valid JSON formatting.
-- Bear in mind that the description will be sent to an image generation model downstream, so it should be concise and descriptive.
-- image descriptions should be independent of each other and not refer to the same scene, eg using phrases like "the same person" or "the same place"
-- image timings should line up with a subtitle starting or ending
-- the image timings should be such that one starts right as the previous one ends so they are perfectly sequential with no gaps
+- "images": A list of 4 image descriptions with associated timings in the format:
+  [{"start_time": "00:00:00", "end_time": "00:00:05", "description": "Description of the image"}, ...]
+  - Use double quotes for valid JSON formatting.
+  - Descriptions should be concise, vivid, and suitable for an image generation model.
+  - Each image should represent a different scene or concept; avoid references like "the same person" or "the same place".
+  - Image timings must align with subtitle start or end times.
+  - Timings should be sequential and continuous, with no overlaps or gaps.
+
+- "video_description": A short, engaging summary of the overall video content that would be appealing on platforms like TikTok and YouTube.
+
+- "video_tags": A list of relevant SEO-friendly tags (e.g., topics, themes, keywords) that would improve video discoverability:
+  - Each tag cannot have spaces or special characters eg "boss vs employee" should be "boss_vs_employee".
+  - At most generate 10 tags, aim for 5-7 tags.
+
+Return the output as a single valid JSON object in this format:
+{"images": [...], "video_description": "...", "video_tags": ["tag1", "tag2", ...]}
 """

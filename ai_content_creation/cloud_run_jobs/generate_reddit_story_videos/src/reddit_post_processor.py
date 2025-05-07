@@ -9,7 +9,7 @@ from src.api_requests import (
     fetch_reddit_posts,
     create_audio,
     create_transcript,
-    create_images,
+    create_images_description_tags,
     create_cleaned_text_for_tts,
 )
 
@@ -39,7 +39,9 @@ class RedditPostProcessor:
             bucket_name=gcp_bucket_name,
             gcp_bucket_video_destination_blob_prefix=gcp_bucket_video_destination_blob_prefix,
         )
-        gcp_bucket_video_source_blob_name = "reddit_story_videos/source_videos/mc_parkour.mp4"
+        gcp_bucket_video_source_blob_name = (
+            "reddit_story_videos/source_videos/mc_parkour.mp4"
+        )
         # TODO: alter
         self.base_video_path = Path("/tmp/base_video.mp4")
         self.gcp_bucket_handler.download_file(
@@ -60,7 +62,9 @@ class RedditPostProcessor:
         transcript = create_transcript(
             self.openai_client, audio_file_path, subtitle_file_path
         )
-        images = create_images(self.openai_client, transcript)
+        images, video_description, video_tags = create_images_description_tags(
+            self.openai_client, transcript
+        )
 
         combine_audio_video_images_subtitles(
             audio_file_path=audio_file_path,
@@ -73,7 +77,10 @@ class RedditPostProcessor:
         logger.info(f"Post {index} processed.")
 
         self.gcp_bucket_handler.upload_processsed_video(
-            local_processed_video_path=output_video_path, video_number=index
+            local_processed_video_path=output_video_path,
+            video_number=index,
+            video_description=video_description,
+            video_tags=video_tags,
         )
         logger.info(f"Uploaded processed video {output_video_path} to GCP bucket.")
 

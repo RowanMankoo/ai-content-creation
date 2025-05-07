@@ -61,14 +61,46 @@ class GCPBucketHandler:
 
         logger.info(f"File {source_file} uploaded to {destination_blob_name}.")
 
+    def upload_text_as_file(self, text: str, destination_blob_name: str):
+        """
+        Upload a plain text string as a .txt file to a GCP bucket.
+
+        Args:
+            text (str): The text content to upload.
+            destination_blob_name (str): The destination path in the GCP bucket.
+        """
+        bucket = self.storage_client.bucket(self.bucket_name)
+        blob = bucket.blob(destination_blob_name)
+        blob.upload_from_string(text, content_type="text/plain")
+        logger.info(f"Text uploaded to {destination_blob_name} in bucket {self.bucket_name}.")
+
     def upload_processsed_video(
-        self, local_processed_video_path: str, video_number: int
+        self,
+        local_processed_video_path: str,
+        video_number: int,
+        video_description: str,
+        video_tags: list[str],
     ):
         today = datetime.now().strftime("%Y_%m_%d")
         timestamp = datetime.now().strftime("%H%M%S")
+        video_subfolder = f"output_{str(video_number)}_{timestamp}"
 
-        destination_blob_name = str(
+        video_destination_blob_name = str(
             Path(self.gcp_bucket_video_destination_blob_prefix)
-            / Path(f"{today}/output_{str(video_number)}_{timestamp}.mp4")
+            / Path(f"{today}")
+            / Path(video_subfolder)
+            / Path("video.mp4")
         )
-        self.upload_file(local_processed_video_path, destination_blob_name)
+
+        video_description = video_description.strip() + ' ' + ", ".join('#'+tag for tag in video_tags)
+        video_description_blob_name = str(
+            Path(self.gcp_bucket_video_destination_blob_prefix)
+            / Path(f"{today}")
+            / Path(video_subfolder)
+            / Path("video_description.txt")
+        )
+        
+        self.upload_file(local_processed_video_path, video_destination_blob_name)
+        self.upload_text_as_file(
+            text=video_description, destination_blob_name=video_description_blob_name
+        )
