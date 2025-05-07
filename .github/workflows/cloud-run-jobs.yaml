@@ -27,7 +27,7 @@ jobs:
         with:
           path: ai_content_creation/cloud_run_jobs
           dir_names: true
-          include_subdirs: true
+          include_subdirs: false
           dir_names_exclude_current_dir: true
           escape_json: false
           json: true
