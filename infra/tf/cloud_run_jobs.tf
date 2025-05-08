@@ -17,6 +17,11 @@ module "cloud_run_job__generate_reddit_story_videos" {
       secret_name = "openai-api-key"
       version     = "latest"
     },
+      {
+      env_name    = "RUNWARE_API_KEY"
+      secret_name = "runware-api-key"
+      version     = "latest"
+    },
     {
       env_name    = "REDDIT_CLIENT_ID"
       secret_name = "reddit-client-id"
