@@ -16,7 +16,7 @@ resource "google_cloud_scheduler_job" "trigger_generate_reddit_story_videos" {
           {
             args = [
               "--subreddit=${var.subreddit}",
-              "--n_posts${var.n_posts}",
+              "--n_posts=${var.n_posts}",
               "--n_comments=${var.n_comments}",
               "--time_filter=${var.time_filter}",
             ]
