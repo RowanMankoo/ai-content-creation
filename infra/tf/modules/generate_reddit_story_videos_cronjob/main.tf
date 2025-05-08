@@ -31,7 +31,7 @@ resource "google_cloud_scheduler_job" "trigger_generate_reddit_story_videos" {
 
     oauth_token {
       # service account used by Scheduler to invoke the job
-      service_account_email = google_service_account.cicd_sa.email
+      service_account_email = "${var.sa_email}"
     }
   }
 

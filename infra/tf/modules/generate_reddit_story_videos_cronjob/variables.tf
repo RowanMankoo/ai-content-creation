@@ -13,6 +13,12 @@ variable "cloud_run_job_location" {
   type        = string
 }
 
+variable "sa_email" {
+  description = "Name of the service account to use for the Cloud Scheduler job."
+  type        = string
+  default     = "cicd-sa"
+}
+
 variable "schedule" {
   description = "cron schedule for the job of the form \"* * * * *\" (e.g. \"0 12 * * *\" for every day at noon)."
   type        = string

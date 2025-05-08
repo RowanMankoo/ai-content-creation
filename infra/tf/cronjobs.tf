@@ -4,6 +4,7 @@ module "scheduler_job__generate_reddit_story_videos__AMITheAsshole" {
   name        = "scheduler_job__generate_reddit_story_videos__AMITheAsshole"
   cloud_run_job_name = module.cloud_run_job__generate_reddit_story_videos.name
   cloud_run_job_location = module.cloud_run_job__generate_reddit_story_videos.location
+  sa_email = google_service_account.cicd_sa.email
   schedule    = "* 17 * * *"
   subreddit   = "AmITheAsshole"
   time_filter = "day"
@@ -15,6 +16,7 @@ module "scheduler_job__generate_reddit_story_videos__AITAH" {
   name        = "scheduler_job__generate_reddit_story_videos__AITAH"
   cloud_run_job_name = module.cloud_run_job__generate_reddit_story_videos.name
   cloud_run_job_location = module.cloud_run_job__generate_reddit_story_videos.location
+  sa_email = google_service_account.cicd_sa.email
   schedule    = "* 16 * * *"
   subreddit   = "AITAH"
   time_filter = "day"
@@ -26,6 +28,7 @@ module "scheduler_job__generate_reddit_story_videos__confession" {
   name        = "scheduler_job__generate_reddit_story_videos__confession"
   cloud_run_job_name = module.cloud_run_job__generate_reddit_story_videos.name
   cloud_run_job_location = module.cloud_run_job__generate_reddit_story_videos.location
+  sa_email = google_service_account.cicd_sa.email
   schedule    = "* 16 * * *"
   subreddit   = "confession"
   time_filter = "day"
