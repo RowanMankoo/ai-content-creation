@@ -19,6 +19,11 @@ variable "sa_email" {
   default     = "cicd-sa"
 }
 
+variable "project_number" {
+  description = "Project number of the GCP project."
+  type        = string
+}
+
 variable "schedule" {
   description = "cron schedule for the job of the form \"* * * * *\" (e.g. \"0 12 * * *\" for every day at noon)."
   type        = string
