@@ -1,40 +1,32 @@
-resource "google_cloud_scheduler_job" "trigger_generate_reddit_story_videos" {
-  name        = "trigger_generate_reddit_story_videos"
-  description = "Trigger Cloud Run Job to generate Reddit story videos"
-  schedule    = "10 18 * * *"
-  time_zone   = "Europe/London"
+module "scheduler_job__generate_reddit_story_videos__AMITheAsshole" {
+  source = "./modules/generate_reddit_story_videos_cronjob"
 
-  http_target {
-    http_method = "POST"
-    # point to the jobs.run endpoint for the specific job:
-    uri = "https://${module.cloud_run_job__generate_reddit_story_videos.location}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${data.google_project.project.number}/jobs/${module.cloud_run_job__generate_reddit_story_videos.name}:run"
+  name        = "scheduler_job__generate_reddit_story_videos__AMITheAsshole"
+  cloud_run_job_name = module.cloud_run_job__generate_reddit_story_videos.name
+  cloud_run_job_location = module.cloud_run_job__generate_reddit_story_videos.location
+  schedule    = "* 17 * * *"
+  subreddit   = "AmITheAsshole"
+  time_filter = "day"
+}
 
-    # supply your override JSON in the body, base64-encoded:
-    body = base64encode(jsonencode({
-      overrides = {
-        containerOverrides = [
-          {
-            args = [
-              "--subreddit=AmITheAsshole",
-            ]
-          }
-        ]
-      }
-    }))
+module "scheduler_job__generate_reddit_story_videos__AITAH" {
+  source = "./modules/generate_reddit_story_videos_cronjob"
 
-    headers = {
-      "Content-Type" = "application/json"
-    }
+  name        = "scheduler_job__generate_reddit_story_videos__AITAH"
+  cloud_run_job_name = module.cloud_run_job__generate_reddit_story_videos.name
+  cloud_run_job_location = module.cloud_run_job__generate_reddit_story_videos.location
+  schedule    = "* 16 * * *"
+  subreddit   = "AITAH"
+  time_filter = "day"
+}
 
-    oauth_token {
-      # service account used by Scheduler to invoke the job
-      service_account_email = google_service_account.cicd_sa.email
-    }
-  }
+module "scheduler_job__generate_reddit_story_videos__confession" {
+  source = "./modules/generate_reddit_story_videos_cronjob"
 
-  # optional: retry on failure up to 3 times
-  retry_config {
-    retry_count = 3
-  }
-
+  name        = "scheduler_job__generate_reddit_story_videos__confession"
+  cloud_run_job_name = module.cloud_run_job__generate_reddit_story_videos.name
+  cloud_run_job_location = module.cloud_run_job__generate_reddit_story_videos.location
+  schedule    = "* 16 * * *"
+  subreddit   = "confession"
+  time_filter = "day"
 }
