@@ -9,8 +9,9 @@ from src.api_requests import (
     fetch_reddit_posts,
     create_audio,
     create_transcript,
-    create_images_description_tags,
+    subtitle_to_video_metadata,
     create_cleaned_text_for_tts,
+    cleaned_text_to_voice_description_metadata
 )
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,7 @@ class RedditPostProcessor:
         )
         gcp_bucket_video_source_blob_name = (
             "reddit_story_videos/source_videos/mc_parkour.mp4"
+            # "reddit_story_videos/source_videos/RPReplay_Final1746657961.mp4"
         )
         # TODO: alter
         self.base_video_path = Path("/tmp/base_video.mp4")
@@ -58,11 +60,14 @@ class RedditPostProcessor:
         output_video_path = output_dir / "output.mp4"
 
         cleaned_text = create_cleaned_text_for_tts(self.openai_client, post)
-        create_audio(self.openai_client, cleaned_text, audio_file_path)
+        male, voice_instructions = cleaned_text_to_voice_description_metadata(
+            self.openai_client, cleaned_text
+        )
+        create_audio(self.openai_client, cleaned_text, male, voice_instructions, audio_file_path)
         transcript = create_transcript(
             self.openai_client, audio_file_path, subtitle_file_path
         )
-        images, video_description, video_tags = create_images_description_tags(
+        images, video_description, video_tags = subtitle_to_video_metadata(
             self.openai_client, transcript
         )
 
@@ -72,6 +77,7 @@ class RedditPostProcessor:
             subtitle_file_path=subtitle_file_path,
             image_timeline=images,
             output_file_path=output_video_path,
+            vertical_offset_pct=0.1,  # TODO: put this as configmap somewhere
         )
 
         logger.info(f"Post {index} processed.")

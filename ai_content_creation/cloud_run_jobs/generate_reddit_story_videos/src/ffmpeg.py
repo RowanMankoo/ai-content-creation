@@ -14,6 +14,7 @@ def combine_audio_video_images_subtitles(
     output_file_path: Path,
     resolution: str = "640x1152",
     fps: int = 120,
+    vertical_offset_pct: float = 0.0,
 ):
     for p in (audio_file_path, video_file_path, subtitle_file_path):
         if not p.exists():
@@ -63,8 +64,49 @@ def combine_audio_video_images_subtitles(
         dur = to_secs(img["end_time"]) - to_secs(img["start_time"])
         cmd += ["-loop", "1", "-t", str(dur), "-i", img["image_url"]]
 
+    # probe input video size
+    proc = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=width,height",
+            "-of",
+            "csv=p=0:s=x",
+            str(video_file_path),
+        ],
+        stdout=subprocess.PIPE,
+        text=True,
+        check=True,
+    )
+    inp_w, inp_h = map(int, proc.stdout.strip().split("x"))
+
+    # target aspect ratio
+    ar = w / half_h
+
+    # largest center‐crop at that AR
+    if inp_w / inp_h > ar:
+        crop_h = inp_h
+        crop_w = int(inp_h * ar)
+    else:
+        crop_w = inp_w
+        crop_h = int(inp_w / ar)
+
+    # center + percent offset
+    x = int((inp_w - crop_w) / 2)
+    y_base = (inp_h - crop_h) / 2 + vertical_offset_pct * (inp_h - crop_h)
+    y = int(max(0, min(inp_h - crop_h, y_base)))
+
     parts = []
-    parts.append(f"[0:v]setpts=PTS-STARTPTS,fps={fps},scale={w}:{half_h}[vid]")
+    parts.append(
+        f"[0:v]setpts=PTS-STARTPTS,fps={fps},"
+        f"crop={crop_w}:{crop_h}:{x}:{y},"
+        f"scale={w}:{half_h}[vid]"
+    )
+
     parts.append(f"[1:v][vid]overlay=0:{half_h}[base]")
 
     cur = "[base]"

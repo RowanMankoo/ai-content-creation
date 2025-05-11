@@ -8,12 +8,21 @@ from openai import OpenAI
 from pathlib import Path
 
 from src.subtitle_formatting import convert_srt_to_ass
-from src.prompts import TEXT_CLEANING_PROMPT, IMAGE_DESCRIPTIONS_VIDEO_DESCRIPTION_TAGS_PROMPT
+from src.prompts import (
+    TEXT_CLEANING_PROMPT,
+    SUBTITLE_TO_VIDEO_METADATA_PROMPT,
+    CLEANED_TEXT_TO_VOICE_DESCRIPTION_PROMPT,
+)
 
+# TODO: move this to config
+MALE_VOICE_MAPPER = {
+    0: "ash",
+    1: "nova",
+}
 
 logger = logging.getLogger(__name__)
 
-
+# TODO: async
 def fetch_reddit_posts(n_posts, n_comments, subreddit, time_filter) -> list:
 
     logger.info(
@@ -87,14 +96,21 @@ def runware_image_generation(
     return r.json()["data"][0]["imageURL"]
 
 
-def create_audio(openai_client: OpenAI, text: str, audio_file_path: Path):
+def create_audio(
+    openai_client: OpenAI,
+    text: str,
+    male: bool,
+    voice_instructions: str,
+    audio_file_path: Path,
+):
 
-    audio_response = openai_client.audio.speech.create(
+    with openai_client.audio.speech.with_streaming_response.create(
         model="tts-1",
-        voice="alloy",
+        voice=MALE_VOICE_MAPPER[male],
         input=text,
-    )
-    audio_response.stream_to_file(audio_file_path)
+        instructions=voice_instructions,
+    ) as response:
+        response.stream_to_file(audio_file_path)
 
     logger.info(f"Created and saved audio to {audio_file_path}")
 
@@ -129,12 +145,13 @@ def create_cleaned_text_for_tts(openai_client: OpenAI, post: dict) -> str:
     return response.choices[0].message.content
 
 
-def create_images_description_tags(openai_client: OpenAI, transcript: str) -> list[dict]:
+# TODO: split this func out
+def subtitle_to_video_metadata(openai_client: OpenAI, transcript: str) -> list[dict]:
 
     response = openai_client.chat.completions.create(
         model="gpt-4.1-mini",
         messages=[
-            {"role": "system", "content": IMAGE_DESCRIPTIONS_VIDEO_DESCRIPTION_TAGS_PROMPT},
+            {"role": "system", "content": SUBTITLE_TO_VIDEO_METADATA_PROMPT},
             {"role": "user", "content": transcript.split("[Events]")[-1]},
         ],
         temperature=0.5,
@@ -152,3 +169,25 @@ def create_images_description_tags(openai_client: OpenAI, transcript: str) -> li
             image_description=image["description"]
         )
     return images, video_description, video_tags
+
+
+def cleaned_text_to_voice_description_metadata(
+    openai_client: OpenAI, transcript: str
+) -> list[dict]:
+
+    response = openai_client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": CLEANED_TEXT_TO_VOICE_DESCRIPTION_PROMPT},
+            {"role": "user", "content": transcript.split("[Events]")[-1]},
+        ],
+        temperature=0.5,
+    )
+    raw_response = response.choices[0].message.content
+    logger.info(f"Raw response from OpenAI: {raw_response}")
+    json_response = json.loads(raw_response)
+
+    male = json_response["male"]
+    voice_instructions = json_response["voice_instructions"]
+
+    return male, voice_instructions
