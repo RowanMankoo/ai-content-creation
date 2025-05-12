@@ -16,8 +16,8 @@ from src.prompts import (
 
 # TODO: move this to config
 MALE_VOICE_MAPPER = {
-    0: "ash",
-    1: "nova",
+    0: "nova",
+    1: "ash",
 }
 
 logger = logging.getLogger(__name__)
