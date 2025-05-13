@@ -17,6 +17,7 @@ openai = "^1.61.1"
 pathlib = "^1.0.1"
 google-cloud-storage = "^3.0.0"
 pydantic-settings = "^2.7.1"
+playwright = "^1.52.0"
 
 
 [build-system]
