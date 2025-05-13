@@ -19,4 +19,4 @@ TODO: deal with video being shorter than audio
 TODO: add sound
 TODO: don't process reddit story if it is longer than threshold, 4096 characters is limit
 TODO: allow for differnt videos
-TODO: set up videos in bucket and allow access
+TODO: set up videos in bucket and allow access 
