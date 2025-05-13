@@ -12,8 +12,8 @@ def combine_audio_video_images_subtitles(
     subtitle_file_path: Path,
     image_timeline: list[dict],
     reddit_card_path: Path,
-    card_start_ts: str,
-    card_end_ts: str,
+    reddit_title_card_start_ts: str,
+    reddit_title_card_end_ts: str,
     output_file_path: Path,
     resolution: str = "640x1152",
     fps: int = 120,
@@ -83,7 +83,7 @@ def combine_audio_video_images_subtitles(
         "-loop",
         "1",
         "-t",
-        str(to_secs(card_end_ts) - to_secs(card_start_ts)),
+        str(to_secs(reddit_title_card_end_ts) - to_secs(reddit_title_card_start_ts)),
         "-i",
         str(tmp_card),
     ]
@@ -139,7 +139,7 @@ def combine_audio_video_images_subtitles(
         cur = out
 
     # 3) overlay pre-scaled reddit card
-    s_card, e_card = to_secs(card_start_ts), to_secs(card_end_ts)
+    s_card, e_card = to_secs(reddit_title_card_start_ts), to_secs(reddit_title_card_end_ts)
     parts.append(
         f"{cur}[3:v]overlay=enable='between(t,{s_card},{e_card})'"
         f":x='(W-overlay_w)/2':y='(H-overlay_h)/2'[card]"
