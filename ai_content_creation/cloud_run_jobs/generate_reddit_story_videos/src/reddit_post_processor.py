@@ -5,13 +5,15 @@ from openai import OpenAI
 
 from src.gcp import GCPBucketHandler
 from src.ffmpeg import combine_audio_video_images_subtitles
+from src.reddit_title_card import make_reddit_card
 from src.api_requests import (
     fetch_reddit_posts,
     create_audio,
     create_transcript,
     subtitle_to_video_metadata,
     create_cleaned_text_for_tts,
-    cleaned_text_to_voice_description_metadata
+    cleaned_text_to_voice_description_metadata,
+    remove_title_from_ass_transcript,
 )
 
 logger = logging.getLogger(__name__)
@@ -58,17 +60,38 @@ class RedditPostProcessor:
         audio_file_path = output_dir / "audio.mp3"
         subtitle_file_path = output_dir / "transcript.ass"
         output_video_path = output_dir / "output.mp4"
+        output_reddit_title_card_path = output_dir / "reddit_card.png"
 
-        cleaned_text = create_cleaned_text_for_tts(self.openai_client, post)
+        cleaned_text_dict = create_cleaned_text_for_tts(self.openai_client, post)
+
+        make_reddit_card(
+            title=cleaned_text_dict["cleaned_title"],
+            username="Xcite9",  # TODO: credit acc author
+            subreddit="xcite9",  # TODO: put acc subreddit
+            output=output_reddit_title_card_path,
+        )
+
         male, voice_instructions = cleaned_text_to_voice_description_metadata(
-            self.openai_client, cleaned_text
+            self.openai_client, cleaned_text_dict["cleaned_combined_text"]
         )
-        create_audio(self.openai_client, cleaned_text, male, voice_instructions, audio_file_path)
-        transcript = create_transcript(
-            self.openai_client, audio_file_path, subtitle_file_path
+        create_audio(
+            self.openai_client,
+            cleaned_text_dict["cleaned_combined_text"],
+            male,
+            voice_instructions,
+            audio_file_path,
         )
+        transcript = create_transcript(self.openai_client, audio_file_path)
         images, video_description, video_tags = subtitle_to_video_metadata(
             self.openai_client, transcript
+        )
+        _, reddit_title_card_start_ts, reddit_title_card_end_ts = (
+            remove_title_from_ass_transcript(
+                openai_client=self.openai_client,
+                transcript=transcript,
+                title_to_remove=cleaned_text_dict["cleaned_title"],
+                subtitle_file_path=subtitle_file_path,
+            )
         )
 
         combine_audio_video_images_subtitles(
@@ -76,8 +99,11 @@ class RedditPostProcessor:
             video_file_path=self.base_video_path,
             subtitle_file_path=subtitle_file_path,
             image_timeline=images,
+            reddit_card_path=output_reddit_title_card_path,
+            reddit_title_card_start_ts=reddit_title_card_start_ts,
+            reddit_title_card_end_ts=reddit_title_card_end_ts,
             output_file_path=output_video_path,
-            vertical_offset_pct=0.1,  # TODO: put this as configmap somewhere
+            vertical_offset_pct=0.1,
         )
 
         logger.info(f"Post {index} processed.")

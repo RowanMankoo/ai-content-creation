@@ -12,6 +12,7 @@ from src.prompts import (
     TEXT_CLEANING_PROMPT,
     SUBTITLE_TO_VIDEO_METADATA_PROMPT,
     CLEANED_TEXT_TO_VOICE_DESCRIPTION_PROMPT,
+    TITLE_DETECTION_PROMPT,
 )
 
 # TODO: move this to config
@@ -21,6 +22,7 @@ MALE_VOICE_MAPPER = {
 }
 
 logger = logging.getLogger(__name__)
+
 
 # TODO: async
 def fetch_reddit_posts(n_posts, n_comments, subreddit, time_filter) -> list:
@@ -116,7 +118,8 @@ def create_audio(
 
 
 def create_transcript(
-    openai_client: OpenAI, audio_file_path: Path, subtitle_file_path: Path
+    openai_client: OpenAI,
+    audio_file_path: Path,
 ) -> str:
 
     with open(audio_file_path, "rb") as audio_file:
@@ -126,23 +129,36 @@ def create_transcript(
             response_format="srt",
         )
     ass_transcript = convert_srt_to_ass(srt_transcript)
-    subtitle_file_path.write_text(ass_transcript)
 
-    logger.info(f"Created and saved transcript to {subtitle_file_path}")
     return ass_transcript
 
 
-def create_cleaned_text_for_tts(openai_client: OpenAI, post: dict) -> str:
-    text_to_clean = post["title"] + "\n\n" + post["text"]
-    response = openai_client.chat.completions.create(
+def create_cleaned_text_for_tts(openai_client: OpenAI, post: dict) -> dict[str]:
+    title_response = openai_client.chat.completions.create(
         model="gpt-4.1-mini",
         messages=[
             {"role": "system", "content": TEXT_CLEANING_PROMPT},
-            {"role": "user", "content": text_to_clean},
+            {"role": "user", "content": post["title"]},
         ],
         temperature=0,
     )
-    return response.choices[0].message.content
+    text_response = openai_client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": TEXT_CLEANING_PROMPT},
+            {"role": "user", "content": post["text"]},
+        ],
+        temperature=0,
+    )
+
+    cleaned_title = title_response.choices[0].message.content
+    cleaned_text = text_response.choices[0].message.content
+
+    return {
+        "cleaned_title": cleaned_title,
+        "cleaned_text": cleaned_text,
+        "cleaned_combined_text": cleaned_title + "\n\n" + cleaned_text,
+    }
 
 
 # TODO: split this func out
@@ -191,3 +207,56 @@ def cleaned_text_to_voice_description_metadata(
     voice_instructions = json_response["voice_instructions"]
 
     return male, voice_instructions
+
+
+def remove_title_from_ass_transcript(
+    openai_client: OpenAI,
+    transcript: str,
+    title_to_remove: str,
+    subtitle_file_path: Path,
+) -> tuple[str]:
+
+    logger.info("Starting title removal from transcript.")
+    events_start_phrase = "[Events]\n"
+    split_transcript = transcript.split(events_start_phrase)
+    transcript_info_and_styles, transcript_subtitle_text_and_timings = (
+        split_transcript[0],
+        split_transcript[-1],
+    )
+
+    transcript_subtitle_text_and_timings_list = (
+        transcript_subtitle_text_and_timings.split("\n")
+    )
+
+    # only send 15 lines in to avoid using too many tokens
+    lines = json.dumps(transcript_subtitle_text_and_timings_list[:15])
+    logger.debug(f"Extracted first 15 lines for processing: {lines}")
+
+    resp = openai_client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": TITLE_DETECTION_PROMPT.strip()},
+            {"role": "user", "content": f"Title: {title_to_remove}\nLines:\n{lines}"},
+        ],
+        temperature=0,
+    )
+
+    raw = resp.choices[0].message.content
+    logger.info(f"Raw response from OpenAI: {raw}")
+
+    start_line, end_line, start_ts, end_ts = json.loads(raw)
+
+    title_removed_transcript_subtitle_text_and_timings_list = (
+        transcript_subtitle_text_and_timings_list[:start_line]
+        + transcript_subtitle_text_and_timings_list[end_line + 1 :]
+    )
+    title_removed_transcript = (
+        transcript_info_and_styles
+        + events_start_phrase
+        + "\n".join(title_removed_transcript_subtitle_text_and_timings_list)
+    )
+
+    subtitle_file_path.write_text(title_removed_transcript)
+    logger.info(f"Title successfully removed from transcript and saved to file: {subtitle_file_path}")
+
+    return title_removed_transcript, start_ts, end_ts
