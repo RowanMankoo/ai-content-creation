@@ -2,3 +2,5 @@
 !**/*.py
 !poetry.lock
 !pyproject.toml
+!assets/avatar.png
+!assets/template.html
