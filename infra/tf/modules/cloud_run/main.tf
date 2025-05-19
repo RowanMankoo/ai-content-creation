@@ -8,7 +8,7 @@ resource "google_cloud_run_v2_job" "default" {
     template {
       service_account = var.service_account_email
       max_retries     = 1
-      timeout         = "3000s"
+      timeout         = "1800s" # 30 minutes
 
       containers {
         image = var.image
