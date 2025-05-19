@@ -43,13 +43,22 @@ class RedditPostProcessor:
             gcp_bucket_video_destination_blob_prefix=gcp_bucket_video_destination_blob_prefix,
         )
         gcp_bucket_video_source_blob_name = (
-            "reddit_story_videos/source_videos/mc_parkour.mp4"
-            # "reddit_story_videos/source_videos/RPReplay_Final1746657961.mp4"
+            # "reddit_story_videos/source_videos/mc_parkour.mp4"
+            "reddit_story_videos/source_videos/RPReplay_Final1746657961.mp4"
+        )
+        gcp_bucket_notification_sound_blob_name = (
+            "reddit_story_videos/source_sounds/ding-126626.mp3"
         )
         # TODO: alter
         self.base_video_path = Path("/tmp/base_video.mp4")
+        self.base_notification_sound_path = Path("/tmp/notification_sound.mp3")
+
         self.gcp_bucket_handler.download_file(
             gcp_bucket_video_source_blob_name, destination_file=self.base_video_path
+        )
+        self.gcp_bucket_handler.download_file(
+            gcp_bucket_notification_sound_blob_name,
+            destination_file=self.base_notification_sound_path,
         )
 
     def process_post(self, post, index):
@@ -97,6 +106,7 @@ class RedditPostProcessor:
         combine_audio_video_images_subtitles(
             audio_file_path=audio_file_path,
             video_file_path=self.base_video_path,
+            notification_sound_path=self.base_notification_sound_path,
             subtitle_file_path=subtitle_file_path,
             image_timeline=images,
             reddit_card_path=output_reddit_title_card_path,
@@ -116,25 +126,32 @@ class RedditPostProcessor:
         )
         logger.info(f"Uploaded processed video {output_video_path} to GCP bucket.")
 
-    def process_all_posts(self):
+    # TODO: custom eror handling for out of credits
+    def process_all_posts(self, reddit_posts: dict):
         """Processes all fetched Reddit posts."""
-        if not self.reddit_posts:
-            logger.warning("No posts fetched. Run fetch_posts() first.")
-            return
 
-        for i, post in enumerate(self.reddit_posts):
+        success_count = 0
+        for i, post in enumerate(reddit_posts):
+            if success_count >= self.n_posts:
+                logger.info("Reached required number of posts.")
+                break
             logger.info(f"Processing post {i}...")
             try:
                 self.process_post(post, i)
+                success_count += 1
             except Exception as e:
                 logger.error(f"Error processing post {i}: {e}")
 
+        if success_count < self.n_posts:
+            logger.warning(f"Only made {success_count}/{self.n_posts} videos")
+
     def create_videos(self):
         """Runs the complete processing pipeline."""
-        self.reddit_posts = fetch_reddit_posts(
-            n_posts=self.n_posts,
+        reddit_posts = fetch_reddit_posts(
+            n_posts=self.n_posts * 2,  # fetch double the posts to account for errors
             n_comments=self.n_comments,
             subreddit=self.subreddit,
             time_filter=self.time_filter,
         )
-        self.process_all_posts()
+        self.process_all_posts(reddit_posts)
+        logger.info("All posts processed.")

@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+import os
 
 from google.cloud import storage
 from pathlib import Path
@@ -99,8 +100,14 @@ class GCPBucketHandler:
             / Path(video_subfolder)
             / Path("video_description.txt")
         )
+
+        # Get the execution ID from the environment variable to use as a form of trace id if we need to debug
+        execution_id = os.getenv("CLOUD_RUN_EXECUTION", 'Not set')
         
         self.upload_file(local_processed_video_path, video_destination_blob_name)
         self.upload_text_as_file(
             text=video_description, destination_blob_name=video_description_blob_name
+        )
+        self.upload_text_as_file(
+            text=execution_id, destination_blob_name=f"execution_id.txt"
         )
