@@ -129,6 +129,7 @@ def create_transcript(
             response_format="srt",
         )
     ass_transcript = convert_srt_to_ass(srt_transcript)
+    logger.info(f'Created ASS Subtitle Transcript: {ass_transcript}')
 
     return ass_transcript
 
@@ -154,6 +155,9 @@ def create_cleaned_text_for_tts(openai_client: OpenAI, post: dict) -> dict[str]:
     cleaned_title = title_response.choices[0].message.content
     cleaned_text = text_response.choices[0].message.content
 
+    logger.info(f'Cleaned text for TTS: cleaned_title: {cleaned_title}')
+    logger.info(f'Cleaned text for TTS: cleaned_text: {cleaned_text}')
+    
     return {
         "cleaned_title": cleaned_title,
         "cleaned_text": cleaned_text,

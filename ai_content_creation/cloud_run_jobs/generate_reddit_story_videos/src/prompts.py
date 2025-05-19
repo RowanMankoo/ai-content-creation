@@ -19,18 +19,18 @@ You are a helpful assistant tasked with analyzing a subtitle text file and gener
   - Use double quotes for valid JSON formatting.
   - Descriptions should be concise, vivid, and suitable for an image generation model.
   - Each image should represent a different scene or concept; avoid references like "the same person" or "the same place".
-  - Image timings must align with subtitle start or end times.
+  - Image timings must align with subtitle start or end times, first image should start at 0:00:00 and the last image should end at exactly the same time as the last subtitle line.
   - Timings should be sequential and continuous, with no overlaps or gaps.
 
 - "video_description": A short, engaging summary of the overall video content that would be appealing on platforms like TikTok and YouTube.
 
 - "video_tags": A list of relevant SEO-friendly tags (e.g., topics, themes, keywords) that would improve video discoverability:
-  - Each tag cannot have spaces or special characters eg "boss vs employee" should be "boss_vs_employee".
-  - At most generate 10 tags, aim for 5-7 tags.
+  - Each tag cannot have spaces, '_', special characters or any uppercase letters eg "boss vs employee" should be "bossvsemployee".
+  - At most generate 7 tags, aim for 4-7 tags.
 
 
 Return the output as a single valid JSON object in this format:
-{"images": [...], "video_description": "...", "video_tags": ["tag1", "tag2", ...]}
+{"images": [...], "video_description": "...", "video_-utags": ["tag1", "tag2", ...]}
 """
 
 
