@@ -91,6 +91,7 @@ def runware_image_generation(
             "seed": 1258323831228332,
             "positivePrompt": image_description,
             "model": "rundiffusion:130@100",
+            "lora": [{"model": "civitai:829769@928048", "weight": 1}],
         }
     ]
 
@@ -130,7 +131,7 @@ def create_transcript(
             response_format="srt",
         )
     ass_transcript = convert_srt_to_ass(srt_transcript)
-    logger.info(f'Created ASS Subtitle Transcript: {ass_transcript}')
+    logger.info(f"Created ASS Subtitle Transcript: {ass_transcript}")
 
     return ass_transcript
 
@@ -156,9 +157,9 @@ def create_cleaned_text_for_tts(openai_client: OpenAI, post: dict) -> dict[str]:
     cleaned_title = title_response.choices[0].message.content
     cleaned_text = text_response.choices[0].message.content
 
-    logger.info(f'Cleaned text for TTS: cleaned_title: {cleaned_title}')
-    logger.info(f'Cleaned text for TTS: cleaned_text: {cleaned_text}')
-    
+    logger.info(f"Cleaned text for TTS: cleaned_title: {cleaned_title}")
+    logger.info(f"Cleaned text for TTS: cleaned_text: {cleaned_text}")
+
     return {
         "cleaned_title": cleaned_title,
         "cleaned_text": cleaned_text,
@@ -262,6 +263,8 @@ def remove_title_from_ass_transcript(
     )
 
     subtitle_file_path.write_text(title_removed_transcript)
-    logger.info(f"Title successfully removed from transcript and saved to file: {subtitle_file_path}")
+    logger.info(
+        f"Title successfully removed from transcript and saved to file: {subtitle_file_path}"
+    )
 
     return title_removed_transcript, start_ts, end_ts

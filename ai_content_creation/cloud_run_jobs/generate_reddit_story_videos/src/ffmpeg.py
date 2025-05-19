@@ -174,7 +174,8 @@ def combine_audio_video_images_subtitles(
         "1",
         "-async",
         "1",
-        "-shortest",
+        "-t",
+        str(total_dur),
         str(output_file_path),
     ]
 
