@@ -30,7 +30,7 @@ You are a helpful assistant tasked with analyzing a subtitle text file and gener
 
 
 Return the output as a single valid JSON object in this format:
-{"images": [...], "video_description": "...", "video_-utags": ["tag1", "tag2", ...]}
+{"images": [...], "video_description": "...", "video_tags": ["tag1", "tag2", ...]}
 """
 
 
