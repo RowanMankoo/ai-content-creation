@@ -30,7 +30,7 @@ You are a helpful assistant tasked with analyzing a subtitle text file and gener
 
 
 Return the output as a single valid JSON object in this format:
-{"images": [...], "video_description": "...", "video_-utags": ["tag1", "tag2", ...]}
+{"images": [...], "video_description": "...", "video_tags": ["tag1", "tag2", ...]}
 """
 
 
@@ -74,4 +74,8 @@ Lines:
 
 Example output:
 [1, 2, "0:00:00.00", "0:00:05.29"]
+"""
+
+IMAGE_STYLE_PROMPT = """
+In style of Studio Ghibli
 """
