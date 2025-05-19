@@ -82,32 +82,39 @@ class GCPBucketHandler:
         video_description: str,
         video_tags: list[str],
     ):
-        today = datetime.now().strftime("%Y_%m_%d")
-        timestamp = datetime.now().strftime("%H%M%S")
-        video_subfolder = f"output_{str(video_number)}_{timestamp}"
+        # build date‐based folder structure
+        now = datetime.now()
+        today = now.strftime("%Y_%m_%d")
+        timestamp = now.strftime("%H%M%S")
+        video_subfolder = f"output_{video_number}_{timestamp}"
 
-        video_destination_blob_name = str(
+        base_blob_path = (
             Path(self.gcp_bucket_video_destination_blob_prefix)
-            / Path(f"{today}")
-            / Path(video_subfolder)
-            / Path("video.mp4")
+            / today
+            / video_subfolder
         )
 
-        video_description = video_description.strip() + ' ' + ", ".join('#'+tag for tag in video_tags)
-        video_description_blob_name = str(
-            Path(self.gcp_bucket_video_destination_blob_prefix)
-            / Path(f"{today}")
-            / Path(video_subfolder)
-            / Path("video_description.txt")
-        )
+        def _blob_name(filename: str) -> str:
+            return str(base_blob_path / filename)
 
-        # Get the execution ID from the environment variable to use as a form of trace id if we need to debug
-        execution_id = os.getenv("CLOUD_RUN_EXECUTION", 'Not set')
-        
-        self.upload_file(local_processed_video_path, video_destination_blob_name)
-        self.upload_text_as_file(
-            text=video_description, destination_blob_name=video_description_blob_name
+        # prepare description and execution ID
+        description_text = (
+            video_description.strip()
+            + " "
+            + ", ".join(f"#{tag}" for tag in video_tags)
+        )
+        execution_id = os.getenv("CLOUD_RUN_EXECUTION", "Not set")
+
+        # uploads
+        self.upload_file(
+            source_file=local_processed_video_path,
+            destination_blob_name=_blob_name("video.mp4"),
         )
         self.upload_text_as_file(
-            text=execution_id, destination_blob_name=f"execution_id.txt"
+            text=description_text,
+            destination_blob_name=_blob_name("video_description.txt"),
+        )
+        self.upload_text_as_file(
+            text=execution_id,
+            destination_blob_name=_blob_name("execution_id.txt"),
         )

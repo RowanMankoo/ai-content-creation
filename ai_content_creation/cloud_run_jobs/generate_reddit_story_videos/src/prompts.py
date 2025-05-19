@@ -75,3 +75,7 @@ Lines:
 Example output:
 [1, 2, "0:00:00.00", "0:00:05.29"]
 """
+
+IMAGE_STYLE_PROMPT = """
+In style of Studio Ghibli
+"""

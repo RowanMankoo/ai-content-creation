@@ -13,6 +13,7 @@ from src.prompts import (
     SUBTITLE_TO_VIDEO_METADATA_PROMPT,
     CLEANED_TEXT_TO_VOICE_DESCRIPTION_PROMPT,
     TITLE_DETECTION_PROMPT,
+    IMAGE_STYLE_PROMPT,
 )
 
 # TODO: move this to config
@@ -186,7 +187,7 @@ def subtitle_to_video_metadata(openai_client: OpenAI, transcript: str) -> list[d
 
     for image in images:
         image["image_url"] = runware_image_generation(
-            image_description=image["description"]
+            image_description=image["description"] + " " + IMAGE_STYLE_PROMPT
         )
     return images, video_description, video_tags
 
