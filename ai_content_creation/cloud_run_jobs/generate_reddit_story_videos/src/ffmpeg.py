@@ -159,7 +159,7 @@ def combine_audio_video_images_subtitles(
 
     filter_complex = ";".join(parts)
 
-    cmd = [
+    cmd += [
         "-filter_complex",
         filter_complex,
         "-map",
