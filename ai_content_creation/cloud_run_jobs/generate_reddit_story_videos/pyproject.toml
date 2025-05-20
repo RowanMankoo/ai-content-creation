@@ -18,6 +18,7 @@ pathlib = "^1.0.1"
 google-cloud-storage = "^3.0.0"
 pydantic-settings = "^2.7.1"
 playwright = "^1.52.0"
+google-cloud-texttospeech = "^2.27.0"
 
 
 [build-system]

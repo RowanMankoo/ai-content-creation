@@ -8,11 +8,11 @@ from src.ffmpeg import combine_audio_video_images_subtitles
 from src.reddit_title_card import make_reddit_card
 from src.api_requests import (
     fetch_reddit_posts,
-    create_audio,
+    create_audio_gcp,
     create_transcript,
     subtitle_to_video_metadata,
     create_cleaned_text_for_tts,
-    cleaned_text_to_voice_description_metadata,
+    cleaned_text_to_voice_gender_prediction,
     remove_title_from_ass_transcript,
 )
 
@@ -80,14 +80,12 @@ class RedditPostProcessor:
             output=output_reddit_title_card_path,
         )
 
-        male, voice_instructions = cleaned_text_to_voice_description_metadata(
+        male = cleaned_text_to_voice_gender_prediction(
             self.openai_client, cleaned_text_dict["cleaned_combined_text"]
         )
-        create_audio(
-            self.openai_client,
+        create_audio_gcp(
             cleaned_text_dict["cleaned_combined_text"],
             male,
-            voice_instructions,
             audio_file_path,
         )
         transcript = create_transcript(self.openai_client, audio_file_path)
