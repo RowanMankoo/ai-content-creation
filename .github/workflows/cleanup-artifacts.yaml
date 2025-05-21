@@ -42,6 +42,7 @@ jobs:
           echo "Keeping images:"
           printf "%s\n" "$IMAGES_TO_KEEP"
 
+          DELETED_IMAGES=()
           gcloud artifacts docker images list "$IMAGE_PATH" \
             --project="$PROJECT" \
             --format="value(IMAGE)" \
@@ -49,8 +50,14 @@ jobs:
               for K in $IMAGES_TO_KEEP; do
                 [[ "$IMAGE" == *"$K"* ]] && { echo "keeping $IMAGE"; continue 2; }
               done
-              echo "deleting $IMAGE"
-              gcloud artifacts docker images delete "$IMAGE" \
-                --project="$PROJECT" \
-                --quiet
+              # Extract the image name without the tag
+              IMAGE_NAME="${IMAGE%%:*}"
+              # Only delete if we haven't already
+              if [[ ! " ${DELETED_IMAGES[*]} " =~ " ${IMAGE_NAME} " ]]; then
+                echo "deleting $IMAGE_NAME"
+                gcloud artifacts docker images delete "$IMAGE_NAME" \
+                  --project="$PROJECT" \
+                  --quiet
+                DELETED_IMAGES+=("$IMAGE_NAME")
+              fi
             done

@@ -1,5 +1,5 @@
 resource "google_secret_manager_secret" "gha_service_account_key" {
-  secret_id = "gha-service-account-key"
+  secret_id = "gha-service-account-key" # manually created in GCP console
   replication {
     auto {}
   }
