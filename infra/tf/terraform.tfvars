@@ -1,1 +1,1 @@
-cloud_run_job_image__generate_reddit_story_videos = "europe-west2-docker.pkg.dev/ai-content-creation-438122/docker-repository/generate_reddit_story_videos:63e6567"
+cloud_run_job_image__generate_reddit_story_videos = "europe-west2-docker.pkg.dev/ai-content-creation-438122/docker-repository/generate_reddit_story_videos:e5de0d0"
