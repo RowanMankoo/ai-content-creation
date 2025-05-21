@@ -98,9 +98,9 @@ jobs:
       - name: Commit Terraform changes
         uses: EndBug/add-and-commit@v9
         with:
+          token: ${{ secrets.GH_PAT_TOKEN }}
           default_author: github_actions
           message: "CICD: Update Terraform tfvars with new image: ${{ env.DOCKER_IMAGE_REFERENCE }}"
           add: "infra/tf/terraform.tfvars"
           push: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
+
