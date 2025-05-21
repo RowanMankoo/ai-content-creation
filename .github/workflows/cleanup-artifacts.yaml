@@ -27,37 +27,44 @@ jobs:
       - name: Clean up old artifacts except current tfvars image
         shell: bash
         run: |
-          IMAGES_TO_KEEP=$(grep '^cloud_run_job_image__' infra/tf/terraform.tfvars \
-            | sed -E 's/.*=\s*"([^"]+)".*/\1/')
-          FIRST_IMAGE=$(printf "%s\n" "$IMAGES_TO_KEEP" | head -n1)
+          IFS=$'\n\t'
 
-          HOST=${FIRST_IMAGE%%/*}
-          REST=${FIRST_IMAGE#*/}
-          PROJECT=${REST%%/*}
-          REST2=${REST#*/}
-          REPO=${REST2%%/*}
+          # 1) Read the full image:tag strings you want to keep into an array.
+          mapfile -t IMAGES_TO_KEEP < <(
+            grep '^cloud_run_job_image__' infra/tf/terraform.tfvars \
+              | sed -E 's/.*=\s*"([^"]+)".*/\1/'
+          )
 
-          IMAGE_PATH="${HOST}/${PROJECT}/${REPO}"
-          echo "Target repo: $IMAGE_PATH"
+          # 2) Pull out the IMAGE_RESOURCE (repo path/name) from the first one:
+          #    “europe-west2-docker.pkg.dev/.../generate_reddit_story_videos”
+          IMAGE_RESOURCE="${IMAGES_TO_KEEP[0]%:*}"
+
+          echo "Target repo: $IMAGE_RESOURCE"
           echo "Keeping images:"
-          printf "%s\n" "$IMAGES_TO_KEEP"
+          printf "  %s\n" "${IMAGES_TO_KEEP[@]}"
 
-          DELETED_IMAGES=()
-          gcloud artifacts docker images list "$IMAGE_PATH" \
-            --project="$PROJECT" \
-            --format="value(IMAGE)" \
-          | while read -r IMAGE; do
-              for K in $IMAGES_TO_KEEP; do
-                [[ "$IMAGE" == *"$K"* ]] && { echo "keeping $IMAGE"; continue 2; }
-              done
-              # Extract the image name without the tag
-              IMAGE_NAME="${IMAGE%%:*}"
-              # Only delete if we haven't already
-              if [[ ! " ${DELETED_IMAGES[*]} " =~ " ${IMAGE_NAME} " ]]; then
-                echo "deleting $IMAGE_NAME"
-                gcloud artifacts docker images delete "$IMAGE_NAME" \
-                  --project="$PROJECT" \
-                  --quiet
-                DELETED_IMAGES+=("$IMAGE_NAME")
+          # 3) Build an associative array of the tags you want to keep:
+          declare -A KEEP
+          for FULLIMG in "${IMAGES_TO_KEEP[@]}"; do
+            # tag is everything after the last colon
+            TAG="${FULLIMG##*:}"
+            KEEP["$TAG"]=1
+          done
+
+          # 4) List *all* tags in the repo, strip to just the short tag name,
+          #    and delete those not in your KEEP map.
+          gcloud artifacts docker tags list "$IMAGE_RESOURCE" \
+            --format="get(tag)" \
+          | tr ',' '\n' \
+          | while IFS= read -r RAW; do
+              # strip out any resource-path cruft → just the tag
+              TAG="${RAW##*/}"
+              FULL="$IMAGE_RESOURCE:$TAG"
+
+              if [[ -n "${KEEP[$TAG]:-}" ]]; then
+                echo "keeping $FULL"
+              else
+                echo "deleting $FULL"
+                gcloud artifacts docker images delete "$FULL" --quiet
               fi
             done
