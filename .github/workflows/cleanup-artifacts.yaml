@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -27,44 +27,51 @@ jobs:
       - name: Clean up old artifacts except current tfvars image
         shell: bash
         run: |
+          set -euo pipefail
           IFS=$'\n\t'
 
-          # 1) Read the full image:tag strings you want to keep into an array.
+          # load images to keep
           mapfile -t IMAGES_TO_KEEP < <(
             grep '^cloud_run_job_image__' infra/tf/terraform.tfvars \
               | sed -E 's/.*=\s*"([^"]+)".*/\1/'
           )
 
-          # 2) Pull out the IMAGE_RESOURCE (repo path/name) from the first one:
-          #    “europe-west2-docker.pkg.dev/.../generate_reddit_story_videos”
           IMAGE_RESOURCE="${IMAGES_TO_KEEP[0]%:*}"
 
-          echo "Target repo: $IMAGE_RESOURCE"
-          echo "Keeping images:"
-          printf "  %s\n" "${IMAGES_TO_KEEP[@]}"
-
-          # 3) Build an associative array of the tags you want to keep:
+          # build keep map
           declare -A KEEP
-          for FULLIMG in "${IMAGES_TO_KEEP[@]}"; do
-            # tag is everything after the last colon
-            TAG="${FULLIMG##*:}"
-            KEEP["$TAG"]=1
+          for full in "${IMAGES_TO_KEEP[@]}"; do
+            tag="${full##*:}"
+            tag="${tag//$'\r'}"
+            tag="${tag#"${tag%%[![:space:]]*}"}"
+            tag="${tag%"${tag##*[![:space:]]}"}"
+            KEEP["$tag"]=1
           done
 
-          # 4) List *all* tags in the repo, strip to just the short tag name,
-          #    and delete those not in your KEEP map.
-          gcloud artifacts docker tags list "$IMAGE_RESOURCE" \
-            --format="get(tag)" \
-          | tr ',' '\n' \
-          | while IFS= read -r RAW; do
-              # strip out any resource-path cruft → just the tag
-              TAG="${RAW##*/}"
-              FULL="$IMAGE_RESOURCE:$TAG"
+          # list all tags
+          mapfile -t ALL_TAGS < <(
+            gcloud artifacts docker tags list "$IMAGE_RESOURCE" --format="get(tag)" \
+            | tr ',' '\n' \
+            | sed -e 's!.*/!!' -e 's/\r//g' \
+            | awk '{$1=$1};1'
+          )
 
-              if [[ -n "${KEEP[$TAG]:-}" ]]; then
-                echo "keeping $FULL"
-              else
-                echo "deleting $FULL"
-                gcloud artifacts docker images delete "$FULL" --quiet
-              fi
+          # separate keep vs delete
+          to_delete=()
+          for tag in "${ALL_TAGS[@]}"; do
+            full="$IMAGE_RESOURCE:$tag"
+            if [[ -z "${KEEP[$tag]:-}" ]]; then
+              to_delete+=("$full")
+            fi
+          done
+
+          # delete old tags
+          if (( ${#to_delete[@]} )); then
+            for img in "${to_delete[@]}"; do
+              echo "Deleting $img"
+              gcloud artifacts docker images delete "$img" --quiet
             done
+            echo "Cleanup complete."
+          else
+            echo "No images to delete."
+          fi
