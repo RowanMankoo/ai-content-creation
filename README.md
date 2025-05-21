@@ -20,7 +20,7 @@ The job runs daily via a scheduled Cloud Scheduler trigger (cron job).
 ## CI/CD
 
 - On push to `main`, all Terraform changes are automatically applied.
-- On pull request creation, if changes are detected in the `cloud_run_jobs` folder:
+- If changes are detected in the `cloud_run_jobs` folder:
   - A new Docker image is built with the changes.
   - The image is pushed to Artifact Registry.
   - CI/CD updates `terraform.tfvars` with the new image reference.
