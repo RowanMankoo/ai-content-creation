@@ -1,0 +1,53 @@
+name: Cleanup Artifact Registry
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Clean up old artifacts except current tfvars image
+        shell: bash
+        run: |
+          IMAGES_TO_KEEP=$(grep '^cloud_run_job_image__' infra/tf/terraform.tfvars \
+            | sed -E 's/.*=\s*"([^"]+)".*/\1/')
+          FIRST_IMAGE=$(printf "%s\n" "$IMAGES_TO_KEEP" | head -n1)
+
+          HOST=${FIRST_IMAGE%%/*}
+          REST=${FIRST_IMAGE#*/}
+          PROJECT=${REST%%/*}
+          REST2=${REST#*/}
+          REPO=${REST2%%/*}
+
+          IMAGE_PATH="${HOST}/${PROJECT}/${REPO}"
+          echo "Target repo: $IMAGE_PATH"
+          echo "Keeping images:"
+          printf "%s\n" "$IMAGES_TO_KEEP"
+
+          gcloud artifacts docker images list "$IMAGE_PATH" \
+            --project="$PROJECT" \
+            --format="value(IMAGE)" \
+          | while read -r IMAGE; do
+              for K in $IMAGES_TO_KEEP; do
+                [[ "$IMAGE" == *"$K"* ]] && { echo "keeping $IMAGE"; continue 2; }
+              done
+              echo "deleting $IMAGE"
+              gcloud artifacts docker images delete "$IMAGE" \
+                --project="$PROJECT" \
+                --quiet
+            done

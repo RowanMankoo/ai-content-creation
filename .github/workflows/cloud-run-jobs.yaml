@@ -1,6 +1,6 @@
 name: Build, Tag, and Push Cloud Run Job Images
 on:
-  pull_request:
+  push:
     branches: [main]
     paths:
       - 'ai_content_creation/cloud_run_jobs/**'
@@ -16,9 +16,11 @@ jobs:
     outputs:
       changed_folders: ${{ steps.extract-top.outputs.top_level }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - id: get-folders
+      - name: Get changed folders
+        id: get-folders
         uses: tj-actions/changed-files@v39
         with:
           path: ai_content_creation/cloud_run_jobs
@@ -28,7 +30,8 @@ jobs:
           escape_json: false
           json: true
 
-      - id: extract-top
+      - name: Extract top-level folders
+        id: extract-top
         shell: bash
         env:
           ALL_CHANGED: ${{ steps.get-folders.outputs.all_changed_files }}
@@ -41,7 +44,7 @@ jobs:
             | jq -R -s -c 'split("\n")[:-1]')
           echo "top_level=$tops" >> $GITHUB_OUTPUT
       
-      - name: debug-show-changed-folders
+      - name: Debug changed folders
         run: |
           echo "Changed folders: ${{ steps.extract-top.outputs.top_level }}"
           echo "Changed folders count: $(echo ${{ steps.extract-top.outputs.top_level }} | jq length)"
@@ -55,9 +58,8 @@ jobs:
       matrix:
         folder: ${{ fromJson(needs.detect_changes.outputs.changed_folders) }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set environment variables
         run: |
@@ -65,29 +67,36 @@ jobs:
           echo "GIT_COMMIT_SHA=$GIT_COMMIT_SHA" >> $GITHUB_ENV
           echo "DOCKER_IMAGE_REFERENCE=${DOCKER_REPO_NAME}/${GCP_PROJECT_ID}/${GCP_REPOSITORY}/${{ matrix.folder }}:$GIT_COMMIT_SHA" >> $GITHUB_ENV
 
-      - uses: google-github-actions/auth@v1
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-      - run: gcloud auth configure-docker ${{ env.DOCKER_REPO_NAME }}
+      - name: Configure Docker for Google Cloud
+        run: gcloud auth configure-docker ${{ env.DOCKER_REPO_NAME }}
 
-      - run: |
+      - name: Build Docker image
+        run: |
           cd ai_content_creation/cloud_run_jobs/${{ matrix.folder }}
           docker build -t ai-content-creation/${{ matrix.folder }}:${{ env.GIT_COMMIT_SHA }} .
 
-      - run: |
+      - name: Tag Docker image
+        run: |
           cd ai_content_creation/cloud_run_jobs/${{ matrix.folder }}
           docker tag ai-content-creation/${{ matrix.folder }}:${{ env.GIT_COMMIT_SHA }} ${{ env.DOCKER_IMAGE_REFERENCE }}
 
-      - run: |
+      - name: Push Docker image
+        run: |
           cd ai_content_creation/cloud_run_jobs/${{ matrix.folder }}
           docker push ${{ env.DOCKER_IMAGE_REFERENCE }}
 
-      - run: |
+      - name: Update Terraform variables
+        run: |
           cd infra/tf
           sed -i "s|cloud_run_job_image__${{ matrix.folder }} = .*|cloud_run_job_image__${{ matrix.folder }} = \"${{ env.DOCKER_IMAGE_REFERENCE }}\"|" terraform.tfvars
 
-      - uses: EndBug/add-and-commit@v9
+      - name: Commit Terraform changes
+        uses: EndBug/add-and-commit@v9
         with:
           default_author: github_actions
           message: "CICD: Update Terraform tfvars with new image: ${{ env.DOCKER_IMAGE_REFERENCE }}"
