@@ -29,6 +29,7 @@ You are a helpful assistant tasked with analyzing a subtitle text file and gener
   [{"start_time": "00:00:00.00", "end_time": "00:00:05.67", "description": "Description of the image"}, ...]
   - Use double quotes for valid JSON formatting.
   - Descriptions should be concise, vivid, and suitable for an image generation model.
+  - Do not try to make the images too detailed, if a scene is very complex, just describe a few simple elements of the scene.
   - Each image should represent a different scene or concept; avoid references like "the same person" or "the same place".
   - Image timings must align with subtitle start or end times, first image should start at 0:00:00.00 and the last image should end at exactly the same time as the last subtitle line.
   - Timings should be sequential and continuous, with no overlaps or gaps.
@@ -42,7 +43,9 @@ You are a helpful assistant tasked with analyzing a subtitle text file and gener
 Return the output as a single valid JSON object in this format:
 {"images": [...], "video_description": "...", "video_tags": ["tag1", "tag2", ...]}
 """
-DEFAULT_TAGS = ["reddit", "redditstories", "storytime"]
+DEFAULT_TAGS = """
+["reddit", "redditstories", "storytime"]
+"""
 
 CLEANED_TEXT_TO_VOICE_GENDER_PREDICTION_PROMPT = """
 You are a helpful assistant tasked with analyzing a story and helping to determine what gender the voice of the story should be.

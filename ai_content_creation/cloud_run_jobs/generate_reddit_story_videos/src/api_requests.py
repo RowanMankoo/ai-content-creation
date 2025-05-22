@@ -85,7 +85,7 @@ def runware_image_generation(
             "height": h_half,
             "numberResults": 1,
             "outputFormat": "JPEG",
-            "steps": 33,
+            "steps": 50,
             "CFGScale": 3,
             "scheduler": "Euler Beta",
             "outputType": ["URL"],

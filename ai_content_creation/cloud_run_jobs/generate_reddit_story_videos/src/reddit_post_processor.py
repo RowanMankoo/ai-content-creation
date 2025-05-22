@@ -43,8 +43,8 @@ class RedditPostProcessor:
             gcp_bucket_video_destination_blob_prefix=gcp_bucket_video_destination_blob_prefix,
         )
         gcp_bucket_video_source_blob_name = (
-            # "reddit_story_videos/source_videos/mc_parkour.mp4"
-            "reddit_story_videos/source_videos/RPReplay_Final1746657961.mp4"
+            "reddit_story_videos/source_videos/mc_parkour.mp4"
+            # "reddit_story_videos/source_videos/RPReplay_Final1746657961.mp4"
         )
         gcp_bucket_notification_sound_blob_name = (
             "reddit_story_videos/source_sounds/ding-126626.mp3"
