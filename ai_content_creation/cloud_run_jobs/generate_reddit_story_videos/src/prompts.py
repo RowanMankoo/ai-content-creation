@@ -35,15 +35,14 @@ You are a helpful assistant tasked with analyzing a subtitle text file and gener
 
 - "video_description": A short, engaging summary of the overall video content that would be appealing on platforms like TikTok and YouTube.
 
-- "video_tags": A list of relevant SEO-friendly tags (e.g., topics, themes, keywords) that would improve video discoverability:
+- "video_tags": A list of relevant SEO-friendly tags:
   - Each tag cannot have spaces, '_', special characters or any uppercase letters eg "boss vs employee" should be "bossvsemployee".
-  - At most generate 7 tags, aim for 4-7 tags.
-
+  - Generate 3 tags
 
 Return the output as a single valid JSON object in this format:
 {"images": [...], "video_description": "...", "video_tags": ["tag1", "tag2", ...]}
 """
-
+DEFAULT_TAGS = ["reddit", "redditstories", "storytime"]
 
 CLEANED_TEXT_TO_VOICE_GENDER_PREDICTION_PROMPT = """
 You are a helpful assistant tasked with analyzing a story and helping to determine what gender the voice of the story should be.

@@ -101,7 +101,7 @@ class GCPBucketHandler:
         description_text = (
             video_description.strip()
             + " "
-            + ", ".join(f"#{tag}" for tag in video_tags)
+            + " ".join(f"#{tag}" for tag in video_tags)
         )
         execution_id = os.getenv("CLOUD_RUN_EXECUTION", "Not set")
 

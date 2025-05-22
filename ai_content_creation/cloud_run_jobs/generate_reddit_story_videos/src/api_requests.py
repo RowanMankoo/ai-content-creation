@@ -13,6 +13,7 @@ from src.prompts import (
     TITLE_CLEANING_PROMPT,
     TEXT_CLEANING_PROMPT,
     SUBTITLE_TO_VIDEO_METADATA_PROMPT,
+    DEFAULT_TAGS,
     CLEANED_TEXT_TO_VOICE_GENDER_PREDICTION_PROMPT,
     TITLE_DETECTION_PROMPT,
     IMAGE_STYLE_PROMPT,
@@ -182,7 +183,7 @@ def create_cleaned_text_for_tts(openai_client: OpenAI, post: dict) -> dict[str]:
 
 
 # TODO: split this func out
-def subtitle_to_video_metadata(openai_client: OpenAI, transcript: str) -> list[dict]:
+def subtitle_to_video_metadata(openai_client: OpenAI, transcript: str) -> tuple[list[dict], str, list[str]]:
 
     response = openai_client.chat.completions.create(
         model="gpt-4.1-mini",
@@ -198,7 +199,7 @@ def subtitle_to_video_metadata(openai_client: OpenAI, transcript: str) -> list[d
 
     images = json_response["images"]
     video_description = json_response["video_description"]
-    video_tags = json_response["video_tags"]
+    video_tags = json.loads(DEFAULT_TAGS) + json_response["video_tags"]
 
     for image in images:
         image["image_url"] = runware_image_generation(
