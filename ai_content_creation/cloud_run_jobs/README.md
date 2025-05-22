@@ -1,1 +1,1 @@
-manually add new terraform infra
+Manually add new terraform infra to deploy new job

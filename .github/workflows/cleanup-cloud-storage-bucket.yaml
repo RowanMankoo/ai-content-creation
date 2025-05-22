@@ -1,0 +1,42 @@
+name: Cleanup Cloud Storage Bucket
+
+on:
+  schedule:
+    - cron: '0 0 1,15 * *'
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Clean up videos older than 2 weeks
+        shell: bash
+        run: |
+          BUCKET="ai-content-creation-438122-storage-bucket"
+          PREFIX="reddit_story_videos/processed_videos"
+          cutoff=$(date -d '2 weeks ago' +'%Y_%m_%d')
+          echo "Deleting folders older than $cutoff"
+          for dir in $(gsutil ls "gs://$BUCKET/$PREFIX/"); do
+            dirname=$(basename "${dir%/}")
+            if [[ "$dirname" < "$cutoff" ]]; then
+              echo "Removing $dir"
+              gsutil -m rm -r "$dir"
+            fi
+          done
+
+

@@ -10,6 +10,7 @@ from google.cloud import texttospeech
 
 from src.subtitle_formatting import convert_srt_to_ass
 from src.prompts import (
+    TITLE_CLEANING_PROMPT,
     TEXT_CLEANING_PROMPT,
     SUBTITLE_TO_VIDEO_METADATA_PROMPT,
     CLEANED_TEXT_TO_VOICE_GENDER_PREDICTION_PROMPT,
@@ -26,13 +27,12 @@ MALE_VOICE_MAPPER = {
 logger = logging.getLogger(__name__)
 
 
-# TODO: async
 def fetch_reddit_posts(n_posts, n_comments, subreddit, time_filter) -> list:
 
     logger.info(
         f"Fetching top {n_posts} posts with top {n_comments} comments from {subreddit} subreddit."
     )
-
+    # There is an async lib how it isn't very popular
     reddit = praw.Reddit(
         client_id=os.environ.get("REDDIT_CLIENT_ID"),
         client_secret=os.environ.get("REDDIT_SECRET_KEY"),
@@ -152,9 +152,9 @@ def create_transcript(
 
 def create_cleaned_text_for_tts(openai_client: OpenAI, post: dict) -> dict[str]:
     title_response = openai_client.chat.completions.create(
-        model="gpt-4.1", # not mini here as tends to hallucinate rest of story for some reason
+        model="gpt-4.1",  # not mini here as tends to hallucinate rest of story for some reason
         messages=[
-            {"role": "system", "content": TEXT_CLEANING_PROMPT},
+            {"role": "system", "content": TITLE_CLEANING_PROMPT},
             {"role": "user", "content": post["title"]},
         ],
         temperature=0,

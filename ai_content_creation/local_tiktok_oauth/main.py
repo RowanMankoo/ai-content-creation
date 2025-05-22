@@ -1,4 +1,3 @@
-# TODO: clean this up
 import os
 import base64
 import hashlib
