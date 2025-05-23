@@ -182,13 +182,13 @@ def create_cleaned_text_for_tts(openai_client: OpenAI, post: dict) -> dict[str]:
 
 
 # TODO: split this func out
-def subtitle_to_video_metadata(openai_client: OpenAI, transcript: str) -> tuple[list[dict], str, list[str]]:
+def subtitle_to_video_metadata(openai_client: OpenAI, transcript: str, reddit_title_card_end_ts: str) -> tuple[list[dict], str, list[str]]:
 
     response = openai_client.chat.completions.create(
         model="gpt-4.1-mini",
         messages=[
             {"role": "system", "content": SUBTITLE_TO_VIDEO_METADATA_PROMPT},
-            {"role": "user", "content": transcript.split("[Events]")[-1]},
+            {"role": "user", "content": transcript.split("[Events]")[-1]+f"\nFirst image end time: {reddit_title_card_end_ts}"},
         ],
         temperature=0.5,
     )

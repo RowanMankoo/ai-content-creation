@@ -89,9 +89,6 @@ class RedditPostProcessor:
             audio_file_path,
         )
         transcript = create_transcript(self.openai_client, audio_file_path)
-        images, video_description, video_tags = subtitle_to_video_metadata(
-            self.openai_client, transcript
-        )
         _, reddit_title_card_start_ts, reddit_title_card_end_ts = (
             remove_title_from_ass_transcript(
                 openai_client=self.openai_client,
@@ -100,6 +97,10 @@ class RedditPostProcessor:
                 subtitle_file_path=subtitle_file_path,
             )
         )
+        images, video_description, video_tags = subtitle_to_video_metadata(
+            self.openai_client, transcript, reddit_title_card_end_ts
+        )
+
 
         combine_audio_video_images_subtitles(
             audio_file_path=audio_file_path,

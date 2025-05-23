@@ -14,7 +14,7 @@ TEXT_CLEANING_PROMPT = """
 You are a text‐cleaning assistant for reddit text stories, preparing it for text‐to‐speech. Strictly follow these rules:
 - Correct typos and grammatical errors.
 - Remove hyperlinks, markdown, and any irrelevant formatting.
-- Remove any TLDR type summary at the end of the text.
+- Remove any TLDR summary at the end of the text.
 - Expand common abbreviations and acronyms to full form (especially reddit related ones like AITA = am i the asshole) so that they are friendly for the text to speach model.
 - Preserve all original punctuation, including commas, periods, ellipses, and line breaks, to maintain natural speech rhythms.
 - If the text references images or videos remove these references and describe the content of the image or video in a way that is suitable for a text-to-speech model.
@@ -24,12 +24,13 @@ You are a text‐cleaning assistant for reddit text stories, preparing it for te
 """
 
 SUBTITLE_TO_VIDEO_METADATA_PROMPT = """
-You are a helpful assistant tasked with analyzing a subtitle text file and generating the following output:
+You are a helpful assistant tasked with analyzing a subtitle text file (and a first_image_end_time) and generating the following output:
 
-- "images": A list of 4 image descriptions with associated timings in the format:
-  [{"start_time": "00:00:00.00", "end_time": "00:00:05.67", "description": "Description of the image"}, ...]
+- "images": A list of 4-8 image descriptions with associated timings in the format:
+  [{"start_time": "00:00:00.00", "end_time": first_image_end_time, "description": "Description of the image1"}, {"start_time": first_image_end_time, "end_time": "00:00:10.67", "description": "Description of the image2"}, {"start_time": "00:00:10.67", "end_time": "00:00:30.52", "description": "Description of the image3"} ...]
   - Use double quotes for valid JSON formatting.
   - Descriptions should be concise, vivid, and suitable for an image generation model.
+  - DO NOT ask images to generate text as they are bad at it.
   - Do not try to make the images too detailed, if a scene is very complex, just describe a few simple elements of the scene.
   - Each image should represent a different scene or concept; avoid references like "the same person" or "the same place".
   - Image timings must align with subtitle start or end times, first image should start at 0:00:00.00 and the last image should end at exactly the same time as the last subtitle line.
