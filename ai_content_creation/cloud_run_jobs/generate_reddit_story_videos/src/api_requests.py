@@ -93,7 +93,6 @@ def runware_image_generation(
             "seed": 1258323831228332,
             "positivePrompt": image_description,
             "model": "rundiffusion:130@100",
-            "lora": [{"model": "civitai:829769@928048", "weight": 1}],
         }
     ]
 

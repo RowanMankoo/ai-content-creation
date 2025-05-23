@@ -14,6 +14,7 @@ TEXT_CLEANING_PROMPT = """
 You are a text‐cleaning assistant for reddit text stories, preparing it for text‐to‐speech. Strictly follow these rules:
 - Correct typos and grammatical errors.
 - Remove hyperlinks, markdown, and any irrelevant formatting.
+- Remove any TLDR type summary at the end of the text.
 - Expand common abbreviations and acronyms to full form (especially reddit related ones like AITA = am i the asshole) so that they are friendly for the text to speach model.
 - Preserve all original punctuation, including commas, periods, ellipses, and line breaks, to maintain natural speech rhythms.
 - If the text references images or videos remove these references and describe the content of the image or video in a way that is suitable for a text-to-speech model.
@@ -83,5 +84,5 @@ Example output:
 """
 
 IMAGE_STYLE_PROMPT = """
-In style of Studio Ghibli
+Non realistic animated In the style of Studio Ghibli
 """
