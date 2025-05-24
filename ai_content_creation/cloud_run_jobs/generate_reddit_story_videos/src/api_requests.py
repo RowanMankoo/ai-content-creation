@@ -28,37 +28,42 @@ MALE_VOICE_MAPPER = {
 logger = logging.getLogger(__name__)
 
 
-def fetch_reddit_posts(n_posts, n_comments, subreddit, time_filter) -> list:
-
+def fetch_reddit_posts(n_posts, n_comments, subreddit_name, time_filter) -> list:
     logger.info(
-        f"Fetching top {n_posts} posts with top {n_comments} comments from {subreddit} subreddit."
+        f"Fetching top {n_posts} posts with top {n_comments} comments from '{subreddit_name}' subreddit."
     )
-    # There is an async lib how it isn't very popular
+
     reddit = praw.Reddit(
         client_id=os.environ.get("REDDIT_CLIENT_ID"),
         client_secret=os.environ.get("REDDIT_SECRET_KEY"),
         user_agent=os.environ.get("REDDIT_USER_AGENT"),
     )
-    subreddit = reddit.subreddit(subreddit)
+    subreddit = reddit.subreddit(subreddit_name)
     top_posts = subreddit.top(time_filter=time_filter, limit=n_posts)
 
-    reddit_posts = []
+    results = []
     for post in top_posts:
-        top_comments = []
-        post.comments.replace_more(limit=0)  # Remove "More comments" links
-        top_n_comments = post.comments.list()[:n_comments]
+        post.comments.replace_more(limit=0)
+        comments = []
+        for comment in post.comments.list()[:n_comments]:
+            comments.append(
+                {
+                    "username": comment.author.name if comment.author else "[deleted]",
+                    "body": comment.body,
+                }
+            )
 
-        for comment in top_n_comments:
-            top_comments.append(comment.body)
+        results.append(
+            {
+                "title": post.title,
+                "post_username": (post.author.name if post.author else "[deleted]"),
+                "subreddit": subreddit_name,
+                "text": post.selftext or "No self-text available.",
+                "top_comments": comments,
+            }
+        )
 
-        post_info = {
-            "title": post.title,
-            "text": post.selftext if post.selftext else "No self-text available.",
-            "top_comments": top_comments,
-        }
-
-        reddit_posts.append(post_info)
-    return reddit_posts
+    return results
 
 
 def runware_image_generation(
@@ -182,13 +187,19 @@ def create_cleaned_text_for_tts(openai_client: OpenAI, post: dict) -> dict[str]:
 
 
 # TODO: split this func out
-def subtitle_to_video_metadata(openai_client: OpenAI, transcript: str, reddit_title_card_end_ts: str) -> tuple[list[dict], str, list[str]]:
+def subtitle_to_video_metadata(
+    openai_client: OpenAI, transcript: str, reddit_title_card_end_ts: str
+) -> tuple[list[dict], str, list[str]]:
 
     response = openai_client.chat.completions.create(
         model="gpt-4.1-mini",
         messages=[
             {"role": "system", "content": SUBTITLE_TO_VIDEO_METADATA_PROMPT},
-            {"role": "user", "content": transcript.split("[Events]")[-1]+f"\nFirst image end time: {reddit_title_card_end_ts}"},
+            {
+                "role": "user",
+                "content": transcript.split("[Events]")[-1]
+                + f"\nFirst image end time: {reddit_title_card_end_ts}",
+            },
         ],
         temperature=0.5,
     )

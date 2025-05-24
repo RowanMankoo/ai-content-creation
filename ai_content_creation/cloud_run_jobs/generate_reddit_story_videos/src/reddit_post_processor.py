@@ -75,8 +75,8 @@ class RedditPostProcessor:
 
         make_reddit_card(
             title=cleaned_text_dict["cleaned_title"],
-            username="Xcite9",  # TODO: credit acc author
-            subreddit="xcite9",  # TODO: put acc subreddit
+            username=post['post_username'],
+            subreddit=post['subreddit'],
             output=output_reddit_title_card_path,
         )
 
@@ -149,7 +149,7 @@ class RedditPostProcessor:
         reddit_posts = fetch_reddit_posts(
             n_posts=self.n_posts * 2,  # fetch double the posts to account for errors
             n_comments=self.n_comments,
-            subreddit=self.subreddit,
+            subreddit_name=self.subreddit,
             time_filter=self.time_filter,
         )
         self.process_all_posts(reddit_posts)
