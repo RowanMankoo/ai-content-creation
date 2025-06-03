@@ -7,8 +7,13 @@ import praw
 from openai import OpenAI
 from pathlib import Path
 from google.cloud import texttospeech
+from google.cloud import speech
 
-from src.subtitle_formatting import convert_srt_to_ass
+from src.subtitle_formatting import (
+    make_ass_from_words,
+    make_ass_from_google_response,
+)
+from deepgram import DeepgramClient, PrerecordedOptions
 from src.prompts import (
     TITLE_CLEANING_PROMPT,
     TEXT_CLEANING_PROMPT,
@@ -110,6 +115,7 @@ def create_audio_gcp(
     text: str,
     male: bool,
     audio_file_path: Path,
+    speaking_rate: float = 1.1,
 ):
     # Enforce a 5k character limit to avoid oversized TTS requests
     if len(text) > 5000:
@@ -125,7 +131,8 @@ def create_audio_gcp(
         language_code="en-US", name=MALE_VOICE_MAPPER[male]
     )
     audio_config = texttospeech.AudioConfig(
-        audio_encoding=texttospeech.AudioEncoding.MP3
+        audio_encoding=texttospeech.AudioEncoding.MP3,
+        speaking_rate=speaking_rate,
     )
 
     response = tts_client.synthesize_speech(
@@ -144,16 +151,44 @@ def create_transcript(
 ) -> str:
 
     with open(audio_file_path, "rb") as audio_file:
-        srt_transcript = openai_client.audio.transcriptions.create(
+        transcript = openai_client.audio.transcriptions.create(
             file=audio_file,
             model="whisper-1",
-            response_format="srt",
+            language="en",
+            response_format="verbose_json",
+            timestamp_granularities=["word"],
         )
-    ass_transcript = convert_srt_to_ass(srt_transcript)
+    ass_transcript = make_ass_from_words(transcript.words)
     logger.info(f"Created ASS Subtitle Transcript: {ass_transcript}")
 
     return ass_transcript
 
+
+def create_transcript_gcs(gcs_uri: str) -> str:
+    client = speech.SpeechClient()
+    audio = speech.RecognitionAudio(uri=gcs_uri)
+    config = speech.RecognitionConfig(
+        encoding=speech.RecognitionConfig.AudioEncoding.MP3,
+        sample_rate_hertz=24000,
+        language_code="en-US",
+        enable_word_time_offsets=True,
+    )
+    response = client.recognize(config=config, audio=audio)
+    return make_ass_from_google_response(response)
+
+def create_transcript_deepgram(audio_file_path: Path) -> str:
+    key = os.environ["DEEPGRAM_API_KEY"]
+    deepgram_client = DeepgramClient(key)
+
+    with open(audio_file_path, "rb") as audio_file:
+        source: dict = {"stream": audio_file}
+        options = PrerecordedOptions(model="nova-3")
+        response = deepgram_client.listen.rest.v("1").transcribe_file(
+            source=source,
+            options=options,
+        )
+        words = response.results.channels[0].alternatives[0].words
+    return make_ass_from_words(words)
 
 def create_cleaned_text_for_tts(openai_client: OpenAI, post: dict) -> dict[str]:
     title_response = openai_client.chat.completions.create(
@@ -247,6 +282,7 @@ def remove_title_from_ass_transcript(
     transcript: str,
     title_to_remove: str,
     subtitle_file_path: Path,
+    n_lines: int = 100,
 ) -> tuple[str]:
 
     logger.info("Starting title removal from transcript.")
@@ -261,9 +297,9 @@ def remove_title_from_ass_transcript(
         transcript_subtitle_text_and_timings.split("\n")
     )
 
-    # only send 15 lines in to avoid using too many tokens
-    lines = json.dumps(transcript_subtitle_text_and_timings_list[:15])
-    logger.debug(f"Extracted first 15 lines for processing: {lines}")
+    # only send n_lines in to avoid using too many tokens
+    lines = json.dumps(transcript_subtitle_text_and_timings_list[:n_lines])
+    logger.debug(f"Extracted first {n_lines} lines for processing: {lines}")
 
     resp = openai_client.chat.completions.create(
         model="gpt-4.1-mini",

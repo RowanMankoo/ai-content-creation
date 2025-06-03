@@ -61,19 +61,19 @@ TITLE_DETECTION_PROMPT = """
 You are given a title and a list of subtitle dialogue lines in ASS format. The title will begin on the first dialogue line and may span multiple lines. It may not exactly match the text in the subtitles but should match closely enough for a human to recognize.
 
 Your job is to return a JSON array with four elements:
-1. the line number where the title starts in the subtitles (always 1),
+1. the line number where the title starts this hsould always be 0:00:00.00
 2. the line number where the title ends in the subtitles (inclusive),
 3. the start time of the title block (the “Start” timestamp of the first title line),
 4. the end time of the title block (the “End”   timestamp of the last  title line).
 
-If only part of the title appears on line 1, return `[1, 1, "<start1>", "<end1>"]`.  
-If it continues through line 2, return `[1, 2, "<start1>", "<end2>"]`, and so on.  
+If only part of the title appears on line 1, return `[1, 1, "0:00:00.00", "<end1>"]`.  
+If it continues through line 2, return `[1, 2, "0:00:00.00", "<end2>"]`, and so on.  
 
 Example input:
 Title: My co-worker told our boss, you're not intimidating, you're just tall and loud  
 Lines:
 '["Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
-  "Dialogue: 0,0:00:00.00,0:00:03.21,Default,,0,0,0,,{\\\\an5}My co-worker told our boss, you're not intimidating,",
+  "Dialogue: 0,0:00:00.20,0:00:03.21,Default,,0,0,0,,{\\\\an5}My co-worker told our boss, you're not intimidating,",
   "Dialogue: 0,0:00:03.22,0:00:05.29,Default,,0,0,0,,{\\\\an5}you're just tall and loud.",
   "Dialogue: 0,0:00:05.30,0:00:06.99,Default,,0,0,0,,{\\\\an5}And I still think about it.",
   "Dialogue: 0,0:00:07.00,0:00:08.65,Default,,0,0,0,,{\\\\an5}This happened a few months ago,",

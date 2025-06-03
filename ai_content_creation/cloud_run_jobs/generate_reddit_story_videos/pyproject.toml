@@ -19,6 +19,8 @@ google-cloud-storage = "^3.0.0"
 pydantic-settings = "^2.7.1"
 playwright = "^1.52.0"
 google-cloud-texttospeech = "^2.27.0"
+google-cloud-speech = "^2.32.0"
+deepgram-sdk = "^4.1.0"
 
 
 [build-system]

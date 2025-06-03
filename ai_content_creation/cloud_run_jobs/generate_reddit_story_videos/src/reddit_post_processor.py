@@ -9,11 +9,11 @@ from src.reddit_title_card import make_reddit_card
 from src.api_requests import (
     fetch_reddit_posts,
     create_audio_gcp,
-    create_transcript,
     subtitle_to_video_metadata,
     create_cleaned_text_for_tts,
     cleaned_text_to_voice_gender_prediction,
     remove_title_from_ass_transcript,
+    create_transcript_deepgram
 )
 
 logger = logging.getLogger(__name__)
@@ -75,8 +75,8 @@ class RedditPostProcessor:
 
         make_reddit_card(
             title=cleaned_text_dict["cleaned_title"],
-            username=post['post_username'],
-            subreddit=post['subreddit'],
+            username=post["post_username"],
+            subreddit=post["subreddit"],
             output=output_reddit_title_card_path,
         )
 
@@ -88,7 +88,9 @@ class RedditPostProcessor:
             male,
             audio_file_path,
         )
-        transcript = create_transcript(self.openai_client, audio_file_path)
+        transcript = create_transcript_deepgram(
+            audio_file_path=audio_file_path,
+        )
         _, reddit_title_card_start_ts, reddit_title_card_end_ts = (
             remove_title_from_ass_transcript(
                 openai_client=self.openai_client,
@@ -100,7 +102,6 @@ class RedditPostProcessor:
         images, video_description, video_tags = subtitle_to_video_metadata(
             self.openai_client, transcript, reddit_title_card_end_ts
         )
-
 
         combine_audio_video_images_subtitles(
             audio_file_path=audio_file_path,

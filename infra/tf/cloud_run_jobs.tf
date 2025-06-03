@@ -17,7 +17,7 @@ module "cloud_run_job__generate_reddit_story_videos" {
       secret_name = "openai-api-key"
       version     = "latest"
     },
-      {
+    {
       env_name    = "RUNWARE_API_KEY"
       secret_name = "runware-api-key"
       version     = "latest"
@@ -32,5 +32,10 @@ module "cloud_run_job__generate_reddit_story_videos" {
       secret_name = "reddit-secret-key"
       version     = "latest"
     },
+    {
+      env_name    = "DEEPGRAM_API_KEY"
+      secret_name = "deepgram-api-key"
+      version     = "latest"
+    }
   ]
 }
