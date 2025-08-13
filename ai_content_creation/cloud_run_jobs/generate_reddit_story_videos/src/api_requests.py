@@ -90,19 +90,18 @@ def runware_image_generation(
     payload = [
         {
             "taskType": "imageInference",
-            "taskUUID": "97f88698-f178-4eb9-827b-f6eda9dda1d0",
+            "taskUUID": "7ef68268-fd5c-4c92-81e8-069b16d4eaab",
             "width": w,
             "height": h_half,
             "numberResults": 1,
             "outputFormat": "JPEG",
-            "steps": 50,
+            "steps": 30,
             "CFGScale": 3,
-            "scheduler": "Euler Beta",
+            "scheduler": "UniPCMultistepScheduler",
             "outputType": ["URL"],
             "includeCost": True,
-            "seed": 1258323831228332,
             "positivePrompt": image_description,
-            "model": "rundiffusion:130@100",
+            "model": "runware:108@1",
         }
     ]
 
